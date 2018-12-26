@@ -20,7 +20,7 @@
 #
 
 ##=======================================================================
-#PBS -N gen_domain
+#PBS -N sub_gendomain
 #PBS -A P93300642 
 #PBS -l walltime=00:29:00
 #PBS -q premium
