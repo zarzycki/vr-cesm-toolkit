@@ -1,0 +1,41 @@
+ Mapping clm initial data from input to output initial files
+ input numcols =       259987  output numcols =      1355428
+ input numpfts =       482097  output numpfts =      2468638
+ input numldus =        76803  output numldus =       406554
+ finding minimum distance for pfts
+ numpftso =      2468638  numpfts=       482097
+ finding minimum distance for columns
+ numcolso =      1355428
+ finding minimum distance for landunits
+ Add SVN_version and Id to global file attributes
+ reading in initial dataset
+ Skipping variable: timemgr_rst_nstep_rad_prev
+ Skipping variable: timemgr_rst_type
+ Skipping variable: timemgr_rst_step_sec
+ Skipping variable: timemgr_rst_start_ymd
+ Skipping variable: timemgr_rst_start_tod
+ Skipping variable: timemgr_rst_ref_ymd
+ Skipping variable: timemgr_rst_ref_tod
+ Skipping variable: timemgr_rst_curr_ymd
+ Skipping variable: timemgr_rst_curr_tod
+ Skipping variable: grid1d_lon
+ Skipping variable: grid1d_lat
+ Skipping variable: grid1d_ixy
+ Skipping variable: grid1d_jxy
+ Skipping variable: land1d_lon
+ Skipping variable: land1d_lat
+ Skipping variable: land1d_ixy
+ Skipping variable: land1d_jxy
+ Skipping variable: land1d_gridcell_index
+ Skipping variable: land1d_ityplun
+ Skipping variable: land1d_active
+ Skipping variable: cols1d_lon
+ Skipping variable: cols1d_lat
+ Skipping variable: cols1d_ixy
+ Skipping variable: cols1d_jxy
+ Skipping variable: cols1d_gridcell_index
+ Skipping variable: cols1d_landunit_index
+ Skipping variable: cols1d_ityplun
+ Skipping variable: cols1d_ityp
+ Skipping variable: cols1d_active
+ error: 2D variable is not of double type:LEVGRND_CLASS
