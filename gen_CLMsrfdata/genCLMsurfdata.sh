@@ -35,7 +35,7 @@ VRSCRIP="/glade/work/zarzycki/grids/scrip/conus_30_x8.g_scrip.nc"
 #VRSCRIP="/glade/u/home/zarzycki/work/ASD2017_files/grids/scrip/mp15a-120a-US.grid.170118.nc"
 OUTBASE="/glade/work/zarzycki/unigridFiles/"
 
-CLMVERSION="5_0" # options are 4_0 or 4_5
+CLMVERSION="5_0" # options are 4_0 or 5_0
 
 #----------------------------------------------------------------------
 # First, we need to generate the mapping files
