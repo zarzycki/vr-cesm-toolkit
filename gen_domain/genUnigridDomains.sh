@@ -2,7 +2,7 @@
 #
 # Colin Zarzycki
 # Created: 9/15/2015
-# Last updated: 12/26/2018
+# Last updated: 12/25/2018
 #
 # Batch script to generate domain files for VR grids.
 # OUTBASE: the low-level directory where files will be stored
