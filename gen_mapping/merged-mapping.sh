@@ -10,11 +10,11 @@
 ################################################################
 
 atmName="ne0np4colorado.ne30x16"
-atmGridName="/glade/u/home/zarzycki/work/grids/scrip/${atmName}.g_scrip.nc"
-lndName="f09"
-lndGridName="/glade/p/cesmdata/cseg/mapping/grids/fv0.9x1.25_141008.nc"
-ocnName="gx1v7"
-ocnGridName="/glade/p/cesmdata/cseg/mapping/grids/gx1v7_151008.nc"
+atmGridName="/glade/u/home/zarzycki/work/grids/scrip/ne0np4colorado.ne30x16.g_scrip.nc"
+lndName="ne0np4colorado.ne30x16"
+lndGridName="/glade/u/home/zarzycki/work/grids/scrip/ne0np4colorado.ne30x16.g_scrip.nc"
+ocnName="ne0np4colorado.ne30x16"
+ocnGridName="/glade/u/home/zarzycki/work/grids/scrip/ne0np4colorado.ne30x16.g_scrip.nc"
 rofName="r05"
 rofGridName="/glade/p/cesmdata/inputdata/lnd/clm2/mappingdata/grids/SCRIPgrid_0.5x0.5_nomask_c110308.nc"
 glcName="gland4km"
@@ -108,5 +108,9 @@ if [ "$wavName" != "$atmName" ]; then
   # do ATM2WAV_SMAPNAME (blin)
   interp_method="bilinear"   # bilinear, patch, conserve
   ncl gen_X_to_Y_wgts.ncl 'srcName="'${atmName}'"' 'srcGridName="'${atmGridName}'"' 'dstName="'${wavName}'"' 'dstGridName="'${wavGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"'
+
+  # do WAV2ATM_SMAPNAME (blin)
+  interp_method="bilinear"   # bilinear, patch, conserve
+  ncl gen_X_to_Y_wgts.ncl 'srcName="'${wavName}'"' 'srcGridName="'${wavGridName}'"' 'dstName="'${atmName}'"' 'dstGridName="'${atmGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"'
 fi
 

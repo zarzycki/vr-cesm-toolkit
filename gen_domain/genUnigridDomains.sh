@@ -22,7 +22,7 @@
 ##=======================================================================
 #PBS -N sub_gendomain
 #PBS -A P93300642 
-#PBS -l walltime=00:29:00
+#PBS -l walltime=00:19:00
 #PBS -q premium
 #PBS -j oe
 #PBS -M zarzycki@ucar.edu
@@ -34,18 +34,20 @@ OUTBASE="/glade/work/zarzycki/unigridFiles/"
 
 #atmName will be used in the domain filenames.
 #atmGridName is the path to the scrip file of the VR mesh
-atmName="ne0np4tcfplane.ne15x8"
+atmName="ne0np4colorado.ne30x16"
 atmGridName="/glade/u/home/zarzycki/work/grids/scrip/${atmName}.g_scrip.nc"
 
 # Top level path to CIME mapping tools
 # Note: need to have write access to this directory, so either copy the exec
 # or checkout and build in your own dir
-PATH_TO_MAPPING="/glade/work/zarzycki/cesm2_0_beta08/cime/tools/mapping/"
+PATH_TO_MAPPING="/glade/u/home/zarzycki/work/cesm-release/cime/tools/mapping/"
 
 # =====================================================================
 # May need to change these settings, but safe to use t12 for mask for anything >ne30
-ocnName="tx0.1v2"
-ocnGridName="/glade/p/cesmdata/cseg/mapping/grids/tx0.1v2_090127.nc"
+#ocnName="tx0.1v2"
+#ocnGridName="/glade/p/cesmdata/cseg/mapping/grids/tx0.1v2_090127.nc"
+ocnName="gx1v7"
+ocnGridName="/glade/p/cesmdata/cseg/mapping/grids/gx1v7_151008.nc"
 wgtFileDir="."
 
 cdate=`date +%y%m%d`
@@ -66,7 +68,7 @@ ESMF_RegridWeightGen --ignore_unmapped -m ${interp_method} -w ${aaveMap} -s ${oc
 #----------------------------------------------------------------------
 
 set +e
-./gen_domain -m ${aaveMap} -o tx01 -l ${atmName}
+./gen_domain -m ${aaveMap} -o gx1v7 -l ${atmName}
 
 #----------------------------------------------------------------------
 # MOVING FILES + CLEANUP 
