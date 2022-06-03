@@ -13,26 +13,32 @@
 #PBS -N sub_genfsurdat 
 #PBS -A P93300642 
 #PBS -l walltime=3:59:00
-#PBS -q regular
+#PBS -q premium
 #PBS -j oe
 #PBS -l select=4:ncpus=2:mpiprocs=2:mem=109GB
 ################################################################
 
 set +e
 
-#module purge
-#module load mpt
 module load ncl
 
-VRname="mpas120a"
+VRname="CAL_VR4"
 VRshort=${VRname}
-CESMROOT="/glade/u/home/zarzycki/work/cesm2_2_0/"
-VRSCRIP="/glade/u/home/zarzycki/work/grids/scrip/mp120a_grid_140708.nc"
+CESMROOT="/glade/u/home/zarzycki/work/ELM-filegen/"
+VRSCRIP="/glade/u/home/zarzycki/work/grids/scrip/WesternUSA_111-55-28-14-7-4.g_scrip.nc"
 OUTBASE="/glade/work/zarzycki/unigridFiles/"
 TMPDIRBASE="/glade/scratch/zarzycki/"
 ESMFBIN_PATH="/glade/u/apps/ch/opt/esmf/7.0.0-ncdfio-mpi/intel/17.0.1/bin/binO/Linux.intel.64.mpi.default"
-CLMVERSION="5_0" # options are 4_0 or 5_0
+CLMVERSION="4_5" # options are 4_0 or 5_0
 DO_SP_ONLY=true   # true (only create SP surdats) or false (create full crop surdats)
+DO_MAPS=true   # true if we need to gen (or re-gen) maps -- false if we already made them and just want surdat
+
+# For ELM, this may need to be a different spot
+CSMDATA=/glade/u/home/zarzycki/scratch/ELM-data/inputdata
+
+# This is where the tools are located...
+MKSURFDATADIR=${CESMROOT}/components/clm/tools/mksurfdata_map/
+MKMAPDATADIR=${CESMROOT}/components/clm/tools/mkmapdata/
 
 #----------------------------------------------------------------------
 # First, we need to generate the mapping files
@@ -43,31 +49,34 @@ DO_SP_ONLY=true   # true (only create SP surdats) or false (create full crop sur
 cdate=`date +%y%m%d` # Get data in YYMMDD format
 
 # Create TMPDIR
-TMPDIR=${TMPDIRBASE}/tmp.clmsurfdata.${cdate}/
+TMPDIR=${TMPDIRBASE}/tmp.elmsurfdata.${VRname}.${cdate}/
 mkdir -p ${TMPDIR}
 
-# Use for CESM2.0xx
-MKMAPDATADIR=${CESMROOT}/components/clm/tools/mkmapdata/
-
 cd ${TMPDIR}
-regrid_num_proc=8
-time env ESMFBIN_PATH=${ESMFBIN_PATH} REGRID_PROC=$regrid_num_proc ${MKMAPDATADIR}/mkmapdata.sh -b -v --gridfile ${VRSCRIP} --res ${VRname} --gridtype global
 
-cd ${CESMROOT}/components/clm/tools/mksurfdata_map/
-
-if ($DO_SP_ONLY); then
-  CROPSTRING="-no-crop"
-else
-  CROPSTRING=""
+if ($DO_MAPS); then
+  regrid_num_proc=8
+  time env CSMDATA=${CSMDATA} ESMFBIN_PATH=${ESMFBIN_PATH} REGRID_PROC=$regrid_num_proc ${MKMAPDATADIR}/mkmapdata.sh -b -v --gridfile ${VRSCRIP} --res ${VRname} --gridtype global
 fi
-./mksurfdata.pl -years 1850-2000,1850,2000 ${CROPSTRING} -res usrspec -usr_gname ${VRname} -usr_gdate ${cdate} -usr_mapdir ${TMPDIR}
-#./mksurfdata.pl -years 2000-2100,2000 ${CROPSTRING} -ssp_rcp SSP5-8.5 -res usrspec -usr_gname ${VRname} -usr_gdate ${cdate} -usr_mapdir ${TMPDIR}
-#./mksurfdata.pl -years 2000-2100,2000 ${CROPSTRING} -ssp_rcp SSP4-3.4 -res usrspec -usr_gname ${VRname} -usr_gdate ${cdate} -usr_mapdir ${TMPDIR}
 
-## Move the surface datasets
-mkdir -p ${OUTBASE}/${VRname}/clm_surfdata_${CLMVERSION}
-mv landuse*${VRname}*nc surfdata_${VRname}_*.nc ${OUTBASE}/${VRname}/clm_surfdata_${CLMVERSION}
+# Now make the surface data
+if ($DO_SP_ONLY); then
+  CROPSTRING=""
+else
+  CROPSTRING="-crop"
+fi
+${MKSURFDATADIR}/mksurfdata.pl -years 1850,2000,2015,1850-2000 ${CROPSTRING} -res usrspec -usr_gname ${VRname} -usr_gdate ${cdate} -usr_mapdir ${TMPDIR} -exedir ${MKSURFDATADIR}
+
+# Move the surface datasets
+#mkdir -p ${OUTBASE}/${VRname}/clm_surfdata_${CLMVERSION}
+#mv landuse*${VRname}*nc surfdata_${VRname}_*.nc ${OUTBASE}/${VRname}/clm_surfdata_${CLMVERSION}
 
 # Delete mapping files
 #rm -rf ${TMPDIR}
+
+
+
+
+
+
 
