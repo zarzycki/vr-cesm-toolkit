@@ -43,6 +43,14 @@ Opt@InterpMethod         = InterpMethod
 Opt@ForceOverwrite       = True
 Opt@PrintTimings         = True
 
+; check for regional domains
+if (srcName .eq. "gland4km") then
+  Opt@SrcRegional=True
+end if
+if (dstName .eq. "gland4km") then
+  Opt@DstRegional=True
+end if
+
 ESMF_regrid_gen_weights(srcGridName,dstGridName,wgtFileDir+"/"+wgtFileName,Opt)
 
 delete(Opt)
