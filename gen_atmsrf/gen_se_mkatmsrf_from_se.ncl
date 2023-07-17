@@ -1,29 +1,35 @@
-;========================================================
-; TC_cross_and_latlon.ncl:   plots the PS, U, V, and T.
-;========================================================
-load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
-load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
-load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
-load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/esmf/ESMF_regridding.ncl"
-;========================================================
 
 begin
 
 ; need to be modified by the user
-dstName="ne0np4colorado.ne30x16"
-dstGridDir="/glade/u/home/zarzycki/work/grids/scrip/"
-dstGridFile=dstName+".g_scrip.nc"
+;dstName="ne0np4colorado.ne30x16"
+;dstGridDir="/glade/u/home/zarzycki/work/grids/scrip/"
+;dstGridFile=dstName+".g_scrip.nc"
+dstName="Guam_ne128x8_lon145W_lat15N_pg2"
+dstGridDir="/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/grids/scrip/"
+dstGridFile="Guam_ne128x8_lon145W_lat15N_pg2_SCRIP.nc"
 
-; default settings only modify if necessary
+
+;infile="/glade/p/cesmdata/inputdata/atm/cam/chem/trop_mam/atmsrf_ne120np4_181018.nc"
+;srcName="ne120np4"
+;srcGridDir="/glade/p/cesmdata/cseg/mapping/grids/"
+;srcGridDir="/glade/p/cesmdata/inputdata/share/scripgrids/"
+;srcGridFile="ne120np4_pentagons_100310.nc"
+infile="/global/homes/c/czarzyck/inputdata/atm/cam/chem/trop_mam/atmsrf_ne512pg2_200212.nc"
+srcName="ne512pg2"
+srcGridDir="/global/homes/c/czarzyck/mapping-e3sm/grids/"
+srcGridFile="ne512pg2_scrip_20221011.nc"
+
+;wgtFileDir="./"
+wgtFileDir="/pscratch/sd/c/czarzyck/"
+
+atmsrfDir="/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/atmsrf/"
+
+;----------------------------------------------------------------------
+
 InterpMethod="patch"   ;bilinear, patch, conserve
-infile="/glade/p/cesmdata/inputdata/atm/cam/chem/trop_mam/atmsrf_ne120np4_181018.nc"
-srcName="ne120np4"
-srcGridDir="/glade/p/cesmdata/cseg/mapping/grids/"
-srcGridFile="ne120np4_pentagons_100310.nc"
 
-
-wgtFileDir="./"
 if (InterpMethod .eq. "patch") then
   interpString="patc"
 end if
@@ -44,6 +50,10 @@ dstGridName=dstGridDir+"/"+dstGridFile
 ;----------------------------------------------------------------------
 ; Now generate weights file
 ;----------------------------------------------------------------------
+
+quote = inttochar(34)
+wcStrt     = systemfunc("date "+quote+"+%a %b %d %T %Z %Y"+quote)
+print(wcStrt+"")
 
 Opt                      = True
 Opt@InterpMethod         = InterpMethod
@@ -82,7 +92,7 @@ delete_VarAtts(soilw_out,(/"lat1d","lon1d","remap","_FillValue","missing_value"/
 delete_VarAtts(fraction_landuse_out,(/"lat1d","lon1d","remap","_FillValue","missing_value"/))
 
 cdate=systemfunc("date +%y%m%d")
-OUTNAME="atmsrf_"+dstName+"_"+cdate+".nc"
+OUTNAME=atmsrfDir+"/atmsrf_"+dstName+"_"+cdate+".nc"
 system("/bin/rm -f "+OUTNAME)   ; remove any pre-existing file
 ncdf = addfile(OUTNAME ,"c")  ; open output netCDF file
 
@@ -111,7 +121,8 @@ ncdf->soilw  = soilw_out
 
 ; cleanup
 print("cleanin up...")
-system("rm "+wgtFileDir+"/"+wgtFileName)
+system("rm -v "+wgtFileDir+"/"+wgtFileName)
 
+wallClockElapseTime(wcStrt, "Script runtime", 0)
 
 end
