@@ -11,8 +11,8 @@
 #
 
 CESMROOT="/glade/u/home/zarzycki/work/cesm-release/"
-ORIGFILE=/glade/u/home/zarzycki/work/CAM-SE-tools/Gen_ControlVolumes/DIAG_LATLON_nl.nc
-LEVELFILE=/glade/u/home/zarzycki/sewx-cam-forecast/atm_to_cam/L32template.nc
+ORIGFILE=/glade/u/home/zarzycki/work/grids/latlon/ne0np4sontario.ne30x16.g_latlon.nc
+LEVELFILE=/glade/u/home/zarzycki/betacast/atm_to_cam/L32template.nc
 INTERPFILE=/glade/p/cesmdata/inputdata/atm/cam/inic/fv/cami-mam4_0000-01-01_0.9x1.25_L32_c150403.nc
 OUTFILE=./VRncdata.nc
 

@@ -3,16 +3,16 @@
 # Colin Zarzycki 9/17/2015
 #
 # This script will generate the CLM fsurdat and transient land use files for 1850/2000 runs
-# 
+#
 # NOTES:
 # User needs to have write access to $CESMROOT (files are generated within this substructure
 # User needs to have write access to $OUTBASE
 # Output files are written to ${OUTBASE}/${VRname}/clm_surfdata_${CLMVERSION}
 
 ##=======================================================================
-#PBS -N sub_genfsurdat 
-#PBS -A P93300642 
-#PBS -l walltime=3:59:00
+#PBS -N sub_genfsurdat
+#PBS -A P93300642
+#PBS -l walltime=5:59:00
 #PBS -q regular
 #PBS -j oe
 #PBS -l select=4:ncpus=2:mpiprocs=2:mem=109GB
@@ -24,10 +24,10 @@ set +e
 #module load mpt
 module load ncl
 
-VRname="mpas120a"
+VRname="mpasa3-60-florida"
 VRshort=${VRname}
 CESMROOT="/glade/u/home/zarzycki/work/cesm2_2_0/"
-VRSCRIP="/glade/u/home/zarzycki/work/grids/scrip/mp120a_grid_140708.nc"
+VRSCRIP="/glade/u/home/zarzycki/work/grids/scrip/mpasa3-60-florida_scrip.nc"
 OUTBASE="/glade/work/zarzycki/unigridFiles/"
 TMPDIRBASE="/glade/scratch/zarzycki/"
 ESMFBIN_PATH="/glade/u/apps/ch/opt/esmf/7.0.0-ncdfio-mpi/intel/17.0.1/bin/binO/Linux.intel.64.mpi.default"
@@ -60,7 +60,8 @@ if ($DO_SP_ONLY); then
 else
   CROPSTRING=""
 fi
-./mksurfdata.pl -years 1850-2000,1850,2000 ${CROPSTRING} -res usrspec -usr_gname ${VRname} -usr_gdate ${cdate} -usr_mapdir ${TMPDIR}
+#./mksurfdata.pl -years 1850-2000,1850,2000 ${CROPSTRING} -res usrspec -usr_gname ${VRname} -usr_gdate ${cdate} -usr_mapdir ${TMPDIR}
+./mksurfdata.pl -years 1850,2000,2010 ${CROPSTRING} -res usrspec -usr_gname ${VRname} -usr_gdate ${cdate} -usr_mapdir ${TMPDIR}
 #./mksurfdata.pl -years 2000-2100,2000 ${CROPSTRING} -ssp_rcp SSP5-8.5 -res usrspec -usr_gname ${VRname} -usr_gdate ${cdate} -usr_mapdir ${TMPDIR}
 #./mksurfdata.pl -years 2000-2100,2000 ${CROPSTRING} -ssp_rcp SSP4-3.4 -res usrspec -usr_gname ${VRname} -usr_gdate ${cdate} -usr_mapdir ${TMPDIR}
 
