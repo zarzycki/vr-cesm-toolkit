@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/bin/bash
 
 ################################################################
 #PBS -N ncl-maps
@@ -11,12 +11,17 @@
 #PBS -l select=1:ncpus=36
 ################################################################
 
-atmName="Guam_ne128x8_lon145W_lat15N_pg2"
-atmGridName="/global/homes/c/czarzyck/grids/scrip/Guam_ne128x8_lon145W_lat15N_pg2_SCRIP.nc"
-lndName=${atmName}
-lndGridName=${atmGridName}
-ocnName="oRRS15to5"
-ocnGridName="/global/cfs/cdirs/e3sm/inputdata/ocn/mpas-o/oRRS15to5/ocean.RRS.15-5km_scrip_151209.nc"
+#export NCARG_ROOT=/global/homes/c/czarzyck/.conda/pkgs/ncl-6.6.2-h3fdc804_41/
+#PATHTONCL=/global/homes/c/czarzyck/.conda/envs/e3sm_unified_1.8.1_nompi/bin/
+
+atmName="TClandfall-001_ne32x4_pg2"
+atmGridName="~/m2637/E3SM_SCREAM_files/grids/scrip/TClandfall-001_ne32x4_pg2_SCRIP.nc"
+#lndName=${atmName}
+#lndGridName=${atmGridName}
+lndName="ne128pg2"
+lndGridName="/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/grids/scrip/ne128pg2_scrip.nc"
+#ocnName="oRRS15to5"
+#ocnGridName="/global/cfs/cdirs/e3sm/inputdata/ocn/mpas-o/oRRS15to5/ocean.RRS.15-5km_scrip_151209.nc"
 rofName="r0125"
 rofGridName="/global/cfs/cdirs/e3sm/inputdata/lnd/clm2/mappingdata/grids/SCRIPgrid_0.125x0.125_nomask_c170126.nc"
 #glcName="gland4km"
@@ -78,11 +83,11 @@ if [ "$lndName" != "$rofName" ] && [ ! -z "$lndName" ] && [ ! -z "$rofName" ]; t
 
   # do LND2ROF_FMAPNAME (aave)
   interp_method="conserve"   # bilinear, patch, conserve
-  ncl gen_X_to_Y_wgts.ncl 'srcName="'${atmName}'"' 'srcGridName="'${atmGridName}'"' 'dstName="'${rofName}'"' 'dstGridName="'${rofGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"'
+  ncl gen_X_to_Y_wgts.ncl 'srcName="'${lndName}'"' 'srcGridName="'${lndGridName}'"' 'dstName="'${rofName}'"' 'dstGridName="'${rofGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"'
 
   # do ROF2LND_FMAPNAME (aave)
   interp_method="conserve"   # bilinear, patch, conserve
-  ncl gen_X_to_Y_wgts.ncl 'srcName="'${rofName}'"' 'srcGridName="'${rofGridName}'"' 'dstName="'${atmName}'"' 'dstGridName="'${atmGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"'
+  ncl gen_X_to_Y_wgts.ncl 'srcName="'${rofName}'"' 'srcGridName="'${rofGridName}'"' 'dstName="'${lndName}'"' 'dstGridName="'${lndGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"'
 fi
 
 ############################# GLC <-> LND ########################################
