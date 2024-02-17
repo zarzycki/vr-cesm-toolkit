@@ -10,31 +10,34 @@
 # Output files are written to ${OUTBASE}/${VRname}/clm_surfdata_${CLMVERSION}
 
 ##=======================================================================
-#PBS -N sub_genfsurdat
 #PBS -A P93300642
-#PBS -l walltime=3:59:00
-#PBS -q premium
+#PBS -N sub_genfsurdat
+#PBS -q main
 #PBS -j oe
-#PBS -l select=4:ncpus=2:mpiprocs=2:mem=109GB
+#PBS -l job_priority=premium
+#PBS -l walltime=5:59:00
+#PBS -l select=1:ncpus=128:mpiprocs=128:ompthreads=1
 ################################################################
 
 set +e
 
 module load ncl
+module load peak-memusage
 
-VRSCRIP="/glade/u/home/zarzycki/work/grids/scrip/Guam_ne128x8_lon145W_lat15N_pg2_SCRIP.nc"
-VRname="Guam_ne128x8_lon145W_lat15N"
+VRSCRIP="/glade/u/home/zarzycki/work/grids/scrip/Philadelphia_TC_grid_v2_ne128x16_pg2_SCRIP.nc"
+VRname="Philadelphia_TC_grid_v2_ne128x16"
 VRshort=${VRname}
-CESMROOT="/glade/u/home/zarzycki/work/ELM-filegen/"
+CESMROOT="/glade/work/zarzycki/ELM-filegen/"
 OUTBASE="/glade/work/zarzycki/unigridFiles/"
-TMPDIRBASE="/glade/scratch/zarzycki/"
-ESMFBIN_PATH="/glade/u/apps/ch/opt/esmf/7.0.0-ncdfio-mpi/intel/17.0.1/bin/binO/Linux.intel.64.mpi.default"
+TMPDIRBASE="/glade/derecho/scratch/zarzycki/"
+#ESMFBIN_PATH="/glade/u/apps/ch/opt/esmf/7.0.0-ncdfio-mpi/intel/17.0.1/bin/binO/Linux.intel.64.mpi.default"
+ESMFBIN_PATH="/glade/u/apps/derecho/23.06/spack/opt/spack/esmf/8.5.0/cray-mpich/8.1.25/oneapi/2023.0.0/wadv/bin"
 CLMVERSION="4_5" # options are 4_0 or 5_0
 DO_SP_ONLY=true   # true (only create SP surdats) or false (create full crop surdats)
 DO_MAPS=true  # true if we need to gen (or re-gen) maps -- false if we already made them and just want surdat
 
 # For ELM, this may need to be a different spot
-CSMDATA=/glade/u/home/zarzycki/scratch/ELM-data/inputdata
+CSMDATA=/glade/derecho/scratch/zarzycki/ELM-data/inputdata
 
 # This is where the tools are located...
 MKSURFDATADIR=${CESMROOT}/components/clm/tools/mksurfdata_map/
@@ -56,7 +59,8 @@ cd ${TMPDIR}
 
 if ($DO_MAPS); then
   regrid_num_proc=8
-  time env CSMDATA=${CSMDATA} ESMFBIN_PATH=${ESMFBIN_PATH} REGRID_PROC=$regrid_num_proc ${MKMAPDATADIR}/mkmapdata.sh -b -v --gridfile ${VRSCRIP} --res ${VRname} --gridtype global
+  export MPIEXEC="mpiexec -np ${regrid_num_proc}"
+  peak_memusage time env CSMDATA=${CSMDATA} ESMFBIN_PATH=${ESMFBIN_PATH} REGRID_PROC=$regrid_num_proc ${MKMAPDATADIR}/mkmapdata.sh -b -v --gridfile ${VRSCRIP} --res ${VRname} --gridtype global
 fi
 
 # Now make the surface data
