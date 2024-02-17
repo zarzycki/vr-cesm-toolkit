@@ -13,13 +13,13 @@ PATHTONCL=/global/homes/c/czarzyck/.conda/envs/e3sm_unified_1.8.1_nompi/bin/
 
 set -e
 
-EXODUSFILE=Philadelphia_TC_grid_v2_ne128x16.g
+EXODUSFILE=TClandfall-001_ne32x4.g
 SET_NP=4
 SET_PG=2
 
 GRIDSDIR=/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/grids/
 TOPODIR=/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/topo/
-e3sm_root=/global/homes/c/czarzyck/E3SM-20230714/
+e3sm_root=/global/homes/c/czarzyck/E3SM-20240208/
 machine=perlmutter-nocuda-gnu
 INPUTTOPO=/global/cfs/cdirs/e3sm/inputdata/atm/cam/hrtopo/USGS-topo-cube3000.nc
 nsmooth=6
@@ -47,14 +47,15 @@ mkdir -p $TOPODIR
 module purge
 module load PrgEnv-gnu/8.3.3
 module load gcc/11.2.0
+module load cray-libsci/23.02.1.1
 module load craype-accel-host
-module load cray-libsci
-module load craype
-module load cray-mpich/8.1.22
-module load cray-hdf5-parallel/1.12.2.1
-module load cray-netcdf-hdf5parallel/4.9.0.1
-module load cray-parallel-netcdf/1.12.3.1
-module load cmake/3.22.0
+module load craype/2.7.20
+module load cray-mpich/8.1.25
+module load cray-hdf5-parallel/1.12.2.3
+module load cray-netcdf-hdf5parallel/4.9.0.3
+module load cray-parallel-netcdf/1.12.3.3
+module load cmake/3.24.3
+module load evp-patch
 source /global/common/software/e3sm/anaconda_envs/load_latest_e3sm_unified_pm-cpu.sh
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
