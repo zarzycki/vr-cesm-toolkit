@@ -2,7 +2,7 @@
 
 #SBATCH --qos=regular
 #SBATCH --time=06:00:00
-#SBATCH --nodes=1
+#SBATCH --nodes=2
 #SBATCH --ntasks-per-node=128
 #SBATCH --constraint=cpu
 
@@ -13,13 +13,20 @@ PATHTONCL=/global/homes/c/czarzyck/.conda/envs/e3sm_unified_1.8.1_nompi/bin/
 
 set -e
 
-EXODUSFILE=TClandfall-001_ne32x4.g
+if [ "$#" -eq 3 ]; then
+  EXODUSFILE=$1
+  GRIDSDIR=$2
+  TOPODIR=$3
+else
+  EXODUSFILE=conus-tight_16x8.g
+  GRIDSDIR=/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/grids/
+  TOPODIR=/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/topo/
+fi
+
 SET_NP=4
 SET_PG=2
 
-GRIDSDIR=/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/grids/
-TOPODIR=/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/topo/
-e3sm_root=/global/homes/c/czarzyck/E3SM-20240208/
+e3sm_root=/global/homes/c/czarzyck/E3SM-20230714/
 machine=perlmutter-nocuda-gnu
 INPUTTOPO=/global/cfs/cdirs/e3sm/inputdata/atm/cam/hrtopo/USGS-topo-cube3000.nc
 nsmooth=6
@@ -28,8 +35,8 @@ nsmooth=6
 
 EXODUS_NO_EXT="${EXODUSFILE%.*}"
 EXODUSFILE_PG="$EXODUS_NO_EXT"_pg"$SET_PG".g
-SCRIPFILE_PG="$EXODUS_NO_EXT"_pg"$SET_PG"_SCRIP.nc
-SCRIPFILE_NP="$EXODUS_NO_EXT"_np"$SET_NP"_SCRIP.nc
+SCRIPFILE_PG="$EXODUS_NO_EXT"_pg"$SET_PG"_scrip.nc
+SCRIPFILE_NP="$EXODUS_NO_EXT"_np"$SET_NP"_scrip.nc
 
 ####
 
@@ -64,7 +71,7 @@ eval $( ${e3sm_root}/cime/CIME/Tools/get_case_env )
 cd ${homme_tool_root}
 
 #########################################################################################
-## Smooth the topography
+## Get SCRIP grid for PG
 #########################################################################################
 
 GenerateVolumetricMesh --in $EXODUSDIR/$EXODUSFILE --out $EXODUSDIR/$EXODUSFILE_PG --np $SET_PG --uniform
@@ -108,7 +115,7 @@ io_stride = 16
 /
 EOF
 
-srun -n 8 ./src/tool/homme_tool < input.nl
+srun -n 64 ./src/tool/homme_tool < input.nl
 
 #~~ Creates ne0np4_tmp1.nc
 #~~ Now we convert to SCRIP
@@ -150,7 +157,7 @@ infilenames = 'out.nc', '${EXODUS_NO_EXT}np${SET_NP}pg${SET_PG}_smoothed_phis'
 /
 EOF
 
-srun -n 8 ./src/tool/homme_tool < input.nl
+srun -n 64 ./src/tool/homme_tool < input.nl
 
 #########################################################################################
 ## Recompute SGH, etc.

@@ -20,6 +20,14 @@ begin
 ;
 ;wgtFileDir="/glade/scratch/zarzycki/"
 
+print("srcName: "+srcName)
+print("dstName: "+dstName)
+print("-----")
+print("srcGridName: "+srcGridName)
+print("dstGridName: "+dstGridName)
+print("-----")
+print("InterpMethod: "+InterpMethod)
+print("wgtFileDir: "+wgtFileDir)
 
 if (InterpMethod .eq. "patch") then
   interpString="patc"

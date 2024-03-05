@@ -14,20 +14,90 @@
 #export NCARG_ROOT=/global/homes/c/czarzyck/.conda/pkgs/ncl-6.6.2-h3fdc804_41/
 #PATHTONCL=/global/homes/c/czarzyck/.conda/envs/e3sm_unified_1.8.1_nompi/bin/
 
-atmName="TClandfall-001_ne32x4_pg2"
-atmGridName="~/m2637/E3SM_SCREAM_files/grids/scrip/TClandfall-001_ne32x4_pg2_SCRIP.nc"
-#lndName=${atmName}
-#lndGridName=${atmGridName}
-lndName="ne128pg2"
-lndGridName="/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/grids/scrip/ne128pg2_scrip.nc"
-#ocnName="oRRS15to5"
-#ocnGridName="/global/cfs/cdirs/e3sm/inputdata/ocn/mpas-o/oRRS15to5/ocean.RRS.15-5km_scrip_151209.nc"
-rofName="r0125"
-rofGridName="/global/cfs/cdirs/e3sm/inputdata/lnd/clm2/mappingdata/grids/SCRIPgrid_0.125x0.125_nomask_c170126.nc"
-#glcName="gland4km"
-#glcGridName="/glade/p/cesmdata/inputdata/share/scripgrids/SCRIPgrid_greenland_4km_epsg3413_c170414.nc"
-#wavName="ww3a"
-#wavGridName="/glade/p/cesmdata/inputdata/share/scripgrids/ww3a_120222.nc"
+# Init to empty strings
+atmName="" atmGridName="" lndName="" lndGridName="" ocnName="" ocnGridName="" rofName="" rofGridName="" glcName="" glcGridName="" wavName="" wavGridName=""
+
+# Process arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --atmName)
+      atmName="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --atmGridName)
+      atmGridName="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --lndName)
+      lndName="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --lndGridName)
+      lndGridName="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --ocnName)
+      ocnName="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --ocnGridName)
+      ocnGridName="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --rofName)
+      rofName="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --rofGridName)
+      rofGridName="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --glcName)
+      glcName="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --glcGridName)
+      glcGridName="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --wavName)
+      wavName="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    --wavGridName)
+      wavGridName="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    *)
+      shift # past argument
+      ;;
+  esac
+done
+
+echo "Atmosphere Model Name: $atmName"
+echo "Atmosphere Grid Name: $atmGridName"
+echo "Land Model Name: $lndName"
+echo "Land Grid Name: $lndGridName"
+echo "Ocean Model Name: $ocnName"
+echo "Ocean Grid Name: $ocnGridName"
+echo "River Model Name: $rofName"
+echo "River Grid Name: $rofGridName"
+echo "Glacier Model Name: $glcName"
+echo "Glacier Grid Name: $glcGridName"
+echo "Wave Model Name: $wavName"
+echo "Wave Grid Name: $wavGridName"
 
 cdate=`date +%y%m%d`
 wgtFileDir="/pscratch/sd/c/$LOGNAME/tmp.maps.${cdate}/"
@@ -74,6 +144,16 @@ if [ "$ocnName" != "$rofName" ] && [ ! -z "$ocnName" ] && [ ! -z "$rofName" ]; t
   # do ROF2OCN_FMAPNAME (aave)
   interp_method="conserve"   # bilinear, patch, conserve
   ncl gen_X_to_Y_wgts.ncl 'srcName="'${rofName}'"' 'srcGridName="'${rofGridName}'"' 'dstName="'${ocnName}'"' 'dstGridName="'${ocnGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"'
+fi
+
+############################# ROF <-> ATM ########################################
+
+if [ "$atmName" != "$rofName" ] && [ ! -z "$atmName" ] && [ ! -z "$rofName" ]; then
+  echo "Generating ATM <-> ROF maps..... "
+
+  # do ROF2OCN_FMAPNAME (aave)
+  interp_method="conserve"   # bilinear, patch, conserve
+  ncl gen_X_to_Y_wgts.ncl 'srcName="'${atmName}'"' 'srcGridName="'${atmGridName}'"' 'dstName="'${rofName}'"' 'dstGridName="'${rofGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"'
 fi
 
 ############################# ROF <-> LND ########################################

@@ -2,14 +2,22 @@ load "$NCARG_ROOT/lib/ncarg/nclscripts/esmf/ESMF_regridding.ncl"
 
 begin
 
-; need to be modified by the user
-;dstName="ne0np4colorado.ne30x16"
-;dstGridDir="/glade/u/home/zarzycki/work/grids/scrip/"
-;dstGridFile=dstName+".g_scrip.nc"
-dstName="Guam_ne128x8_lon145W_lat15N_pg2"
-dstGridDir="/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/grids/scrip/"
-dstGridFile="Guam_ne128x8_lon145W_lat15N_pg2_SCRIP.nc"
-
+; can be modified by user if not passed in
+if (.not.isvar("dstName"))
+  dstName="TClandfall-001_ne32x4_pg2"
+end if
+if (.not.isvar("dstGridDir"))
+  dstGridDir="/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/grids/scrip/"
+end if
+if (.not.isvar("dstGridFile"))
+  dstGridFile="TClandfall-001_ne32x4_pg2_SCRIP.nc"
+end if
+if (.not.isvar("dstGridFile"))
+  atmsrfDir="/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/atmsrf/"
+end if
+if (.not.isvar("dstGridFile"))
+  wgtFileDir="/pscratch/sd/c/czarzyck/"
+end if
 
 ;infile="/glade/p/cesmdata/inputdata/atm/cam/chem/trop_mam/atmsrf_ne120np4_181018.nc"
 ;srcName="ne120np4"
@@ -21,10 +29,15 @@ srcName="ne512pg2"
 srcGridDir="/global/homes/c/czarzyck/mapping-e3sm/grids/"
 srcGridFile="ne512pg2_scrip_20221011.nc"
 
-;wgtFileDir="./"
-wgtFileDir="/pscratch/sd/c/czarzyck/"
-
-atmsrfDir="/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/atmsrf/"
+print("gen_se_mkatmsrf_from_se.ncl:  dstName: "+dstName)
+print("gen_se_mkatmsrf_from_se.ncl:  dstGridDir: "+dstGridDir)
+print("gen_se_mkatmsrf_from_se.ncl:  dstGridFile: "+dstGridFile)
+print("gen_se_mkatmsrf_from_se.ncl:  atmsrfDir: "+atmsrfDir)
+print("gen_se_mkatmsrf_from_se.ncl:  wgtFileDir: "+wgtFileDir)
+print("gen_se_mkatmsrf_from_se.ncl:  infile: "+infile)
+print("gen_se_mkatmsrf_from_se.ncl:  srcName: "+srcName)
+print("gen_se_mkatmsrf_from_se.ncl:  srcGridDir: "+srcGridDir)
+print("gen_se_mkatmsrf_from_se.ncl:  srcGridFile: "+srcGridFile)
 
 ;----------------------------------------------------------------------
 
@@ -64,7 +77,6 @@ ESMF_regrid_gen_weights(srcGridName,dstGridName,wgtFileDir+"/"+wgtFileName,Opt)
 
 delete(Opt)
 
-
 ; ==========================================================================================
 
 fin = addfile(infile,"r")
@@ -96,9 +108,8 @@ OUTNAME=atmsrfDir+"/atmsrf_"+dstName+"_"+cdate+".nc"
 system("/bin/rm -f "+OUTNAME)   ; remove any pre-existing file
 ncdf = addfile(OUTNAME ,"c")  ; open output netCDF file
 
-;===================================================================
-; create global attributes of the file (optional)
-;===================================================================
+print("writing: "+OUTNAME)
+
 fAtt               = True            ; assign file attributes
 fAtt@source_file   = srcGridDir+"/"+srcGridFile
 fAtt@regrid_file   = wgtFileDir+"/"+wgtFileName
