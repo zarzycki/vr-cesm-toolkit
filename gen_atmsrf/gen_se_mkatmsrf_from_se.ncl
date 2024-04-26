@@ -18,16 +18,24 @@ end if
 if (.not.isvar("dstGridFile"))
   wgtFileDir="/pscratch/sd/c/czarzyck/"
 end if
+if (.not.isvar("MACHINE"))
+  wgtFileDir="NCAR"
+end if
 
-;infile="/glade/p/cesmdata/inputdata/atm/cam/chem/trop_mam/atmsrf_ne120np4_181018.nc"
-;srcName="ne120np4"
-;srcGridDir="/glade/p/cesmdata/cseg/mapping/grids/"
-;srcGridDir="/glade/p/cesmdata/inputdata/share/scripgrids/"
-;srcGridFile="ne120np4_pentagons_100310.nc"
-infile="/global/homes/c/czarzyck/inputdata/atm/cam/chem/trop_mam/atmsrf_ne512pg2_200212.nc"
-srcName="ne512pg2"
-srcGridDir="/global/homes/c/czarzyck/mapping-e3sm/grids/"
-srcGridFile="ne512pg2_scrip_20221011.nc"
+if (MACHINE .eq. "NCAR") then
+  infile="/glade/p/cesmdata/inputdata/atm/cam/chem/trop_mam/atmsrf_ne120np4_181018.nc"
+  srcName="ne120np4"
+  srcGridDir="/glade/p/cesmdata/inputdata/share/scripgrids/"
+  srcGridFile="ne120np4_pentagons_100310.nc"
+else if (MACHINE .eq. "NERSC") then
+  infile="/global/homes/c/czarzyck/inputdata/atm/cam/chem/trop_mam/atmsrf_ne512pg2_200212.nc"
+  srcName="ne512pg2"
+  srcGridDir="/global/homes/c/czarzyck/mapping-e3sm/grids/"
+  srcGridFile="ne512pg2_scrip_20221011.nc"
+else
+  print("No MACHINE support for "+MACHINE+" in gen_se_mkatmsrf_from_se")
+end if
+end if
 
 print("gen_se_mkatmsrf_from_se.ncl:  dstName: "+dstName)
 print("gen_se_mkatmsrf_from_se.ncl:  dstGridDir: "+dstGridDir)
@@ -38,6 +46,7 @@ print("gen_se_mkatmsrf_from_se.ncl:  infile: "+infile)
 print("gen_se_mkatmsrf_from_se.ncl:  srcName: "+srcName)
 print("gen_se_mkatmsrf_from_se.ncl:  srcGridDir: "+srcGridDir)
 print("gen_se_mkatmsrf_from_se.ncl:  srcGridFile: "+srcGridFile)
+print("gen_se_mkatmsrf_from_se.ncl:  MACHINE: "+MACHINE)
 
 ;----------------------------------------------------------------------
 
