@@ -15,13 +15,14 @@
 
 echo "$# args passed in!"
 
-if [ "$#" -eq 6 ]; then
+if [ "$#" -eq 7 ]; then
   atmName="$1"
   atmGridName="$2"
   ocnName="$3"
   ocnGridName="$4"
   OUTBASE="$5"
   PATH_TO_MAPPING="$6"
+  MACHINE="$7"
 else
   echo "Using internal values."
   #atmName will be used in the domain filenames.
@@ -48,6 +49,7 @@ else
   # or checkout and build in your own dir
   #PATH_TO_MAPPING="/glade/u/home/zarzycki/work/cesm2_2_0/cime/tools/mapping/"
   PATH_TO_MAPPING="/global/homes/c/czarzyck/E3SM-20230714/cime/tools/mapping/"
+  MACHINE=""
 fi
 
 # Echoing variables to see what goes into the script
@@ -57,8 +59,14 @@ echo "Using ocnName: $ocnName"
 echo "Using ocnGridName: $ocnGridName"
 echo "Using OUTBASE: $OUTBASE"
 echo "Using PATH_TO_MAPPING: $PATH_TO_MAPPING"
+echo "Using MACHINE: $MACHINE"
 
-conda activate e3sm_unified_1.8.1_nompi
+if [ "$MACHINE" == "NERSC" ]; then
+  conda activate e3sm_unified_1.8.1_nompi
+fi
+if [ "$MACHINE" == "NCAR" ]; then
+  module load esmf
+fi
 which ESMF_RegridWeightGen
 
 wgtFileDir="."
