@@ -10,29 +10,37 @@
 # Output files are written to ${OUTBASE}/${VRname}/clm_surfdata_${CLMVERSION}
 
 ##=======================================================================
-#PBS -N sub_genfsurdat
 #PBS -A P93300642
-#PBS -l walltime=5:59:00
-#PBS -q regular
+#PBS -N sub_genfsurdat
+#PBS -q main
 #PBS -j oe
-#PBS -l select=4:ncpus=2:mpiprocs=2:mem=109GB
+#PBS -l job_priority=premium
+#PBS -l walltime=7:59:00
+#PBS -l select=1:ncpus=128:mpiprocs=128:ompthreads=1
 ################################################################
 
 set +e
 
-#module purge
-#module load mpt
 module load ncl
+module load peak-memusage
 
-VRname="mpasa3-60-florida"
+VRSCRIP="/glade/u/home/zarzycki/work/grids/scrip/ne0np4natlanticref.ne30x8_np4_SCRIP.nc"
+VRname="ne0np4natlanticref.ne30x8_np4"
 VRshort=${VRname}
-CESMROOT="/glade/u/home/zarzycki/work/cesm2_2_0/"
-VRSCRIP="/glade/u/home/zarzycki/work/grids/scrip/mpasa3-60-florida_scrip.nc"
+CESMROOT="/glade/u/home/zarzycki/work/cesm2_2_1/"
 OUTBASE="/glade/work/zarzycki/unigridFiles/"
-TMPDIRBASE="/glade/scratch/zarzycki/"
-ESMFBIN_PATH="/glade/u/apps/ch/opt/esmf/7.0.0-ncdfio-mpi/intel/17.0.1/bin/binO/Linux.intel.64.mpi.default"
+TMPDIRBASE="/glade/derecho/scratch/zarzycki/"
+ESMFBIN_PATH="/glade/u/apps/derecho/23.06/spack/opt/spack/esmf/8.5.0/cray-mpich/8.1.25/oneapi/2023.0.0/wadv/bin"
 CLMVERSION="5_0" # options are 4_0 or 5_0
 DO_SP_ONLY=true   # true (only create SP surdats) or false (create full crop surdats)
+DO_MAPS=true  # true if we need to gen (or re-gen) maps -- false if we already made them and just want surdat
+
+#CSMDATA=/glade/campaign/cesm/cesmdata/inputdata/
+CSMDATA=/glade/derecho/scratch/zarzycki/ELM-data/inputdata
+
+# This is where the tools are located...
+MKSURFDATADIR=${CESMROOT}/components/clm/tools/mksurfdata_map/
+MKMAPDATADIR=${CESMROOT}/components/clm/tools/mkmapdata/
 
 #----------------------------------------------------------------------
 # First, we need to generate the mapping files
@@ -43,31 +51,31 @@ DO_SP_ONLY=true   # true (only create SP surdats) or false (create full crop sur
 cdate=`date +%y%m%d` # Get data in YYMMDD format
 
 # Create TMPDIR
-TMPDIR=${TMPDIRBASE}/tmp.clmsurfdata.${cdate}/
+TMPDIR=${TMPDIRBASE}/tmp.clmsurfdata.${VRname}.${cdate}/
 mkdir -p ${TMPDIR}
 
-# Use for CESM2.0xx
-MKMAPDATADIR=${CESMROOT}/components/clm/tools/mkmapdata/
-
 cd ${TMPDIR}
-regrid_num_proc=8
-time env ESMFBIN_PATH=${ESMFBIN_PATH} REGRID_PROC=$regrid_num_proc ${MKMAPDATADIR}/mkmapdata.sh -b -v --gridfile ${VRSCRIP} --res ${VRname} --gridtype global
 
-cd ${CESMROOT}/components/clm/tools/mksurfdata_map/
+if ($DO_MAPS); then
+  regrid_num_proc=8
+  export MPIEXEC="mpiexec -np ${regrid_num_proc}"
+  peak_memusage time env CSMDATA=${CSMDATA} ESMFBIN_PATH=${ESMFBIN_PATH} REGRID_PROC=$regrid_num_proc ${MKMAPDATADIR}/mkmapdata.sh -b -v --gridfile ${VRSCRIP} --res ${VRname} --gridtype global
+fi
+
 
 if ($DO_SP_ONLY); then
   CROPSTRING="-no-crop"
 else
   CROPSTRING=""
 fi
-#./mksurfdata.pl -years 1850-2000,1850,2000 ${CROPSTRING} -res usrspec -usr_gname ${VRname} -usr_gdate ${cdate} -usr_mapdir ${TMPDIR}
-./mksurfdata.pl -years 1850,2000,2010 ${CROPSTRING} -res usrspec -usr_gname ${VRname} -usr_gdate ${cdate} -usr_mapdir ${TMPDIR}
-#./mksurfdata.pl -years 2000-2100,2000 ${CROPSTRING} -ssp_rcp SSP5-8.5 -res usrspec -usr_gname ${VRname} -usr_gdate ${cdate} -usr_mapdir ${TMPDIR}
-#./mksurfdata.pl -years 2000-2100,2000 ${CROPSTRING} -ssp_rcp SSP4-3.4 -res usrspec -usr_gname ${VRname} -usr_gdate ${cdate} -usr_mapdir ${TMPDIR}
+#${MKSURFDATADIR}/mksurfdata.pl -years 1850-2000,1850,2000 ${CROPSTRING}              -res usrspec -usr_gname ${VRname} -usr_gdate ${cdate} -usr_mapdir ${TMPDIR}
+ ${MKSURFDATADIR}/mksurfdata.pl -years 1850,2000,2010 ${CROPSTRING}                   -res usrspec -usr_gname ${VRname} -usr_gdate ${cdate} -usr_mapdir ${TMPDIR}
+#${MKSURFDATADIR}/mksurfdata.pl -years 2000-2100,2000 ${CROPSTRING} -ssp_rcp SSP5-8.5 -res usrspec -usr_gname ${VRname} -usr_gdate ${cdate} -usr_mapdir ${TMPDIR}
+#${MKSURFDATADIR}/mksurfdata.pl -years 2000-2100,2000 ${CROPSTRING} -ssp_rcp SSP4-3.4 -res usrspec -usr_gname ${VRname} -usr_gdate ${cdate} -usr_mapdir ${TMPDIR}
 
 ## Move the surface datasets
-mkdir -p ${OUTBASE}/${VRname}/clm_surfdata_${CLMVERSION}
-mv landuse*${VRname}*nc surfdata_${VRname}_*.nc ${OUTBASE}/${VRname}/clm_surfdata_${CLMVERSION}
+#mkdir -p ${OUTBASE}/${VRname}/clm_surfdata_${CLMVERSION}
+#mv landuse*${VRname}*nc surfdata_${VRname}_*.nc ${OUTBASE}/${VRname}/clm_surfdata_${CLMVERSION}
 
 # Delete mapping files
 #rm -rf ${TMPDIR}
