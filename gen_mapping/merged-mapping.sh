@@ -15,7 +15,7 @@
 #PATHTONCL=/global/homes/c/czarzyck/.conda/envs/e3sm_unified_1.8.1_nompi/bin/
 
 # Init to empty strings
-atmName="" atmGridName="" lndName="" lndGridName="" ocnName="" ocnGridName="" rofName="" rofGridName="" glcName="" glcGridName="" wavName="" wavGridName=""
+atmName="" atmGridName="" lndName="" lndGridName="" ocnName="" ocnGridName="" rofName="" rofGridName="" glcName="" glcGridName="" wavName="" wavGridName="" wgtFileDir=""
 
 # Process arguments
 while [[ $# -gt 0 ]]; do
@@ -80,11 +80,20 @@ while [[ $# -gt 0 ]]; do
       shift # past argument
       shift # past value
       ;;
+    --wgtFileDir)
+      wgtFileDir="$2"
+      shift # past argument
+      shift # past value
+      ;;
     *)
       shift # past argument
       ;;
   esac
 done
+
+cdate=`date +%y%m%d`
+wgtFileDir="${wgtFileDir}/tmp.maps.${cdate}/"
+mkdir -p $wgtFileDir
 
 echo "Atmosphere Model Name: $atmName"
 echo "Atmosphere Grid Name: $atmGridName"
@@ -98,11 +107,7 @@ echo "Glacier Model Name: $glcName"
 echo "Glacier Grid Name: $glcGridName"
 echo "Wave Model Name: $wavName"
 echo "Wave Grid Name: $wavGridName"
-
-cdate=`date +%y%m%d`
-wgtFileDir="/pscratch/sd/c/$LOGNAME/tmp.maps.${cdate}/"
-#wgtFileDir="/glade/scratch/$LOGNAME/tmp.maps.${cdate}/"
-mkdir -p $wgtFileDir
+echo "wgtFileDir: $wgtFileDir"
 
 ############################# ATM <-> LND ########################################
 
