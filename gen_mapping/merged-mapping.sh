@@ -16,6 +16,9 @@
 
 # Init to empty strings
 atmName="" atmGridName="" lndName="" lndGridName="" ocnName="" ocnGridName="" rofName="" rofGridName="" glcName="" glcGridName="" wavName="" wavGridName="" wgtFileDir=""
+cdate=`date +%y%m%d`
+wgtFileDir="/pscratch/sd/c/$LOGNAME/tmp.maps.${cdate}/"
+#wgtFileDir="/glade/scratch/$LOGNAME/tmp.maps.${cdate}/"
 
 # Process arguments
 while [[ $# -gt 0 ]]; do
@@ -91,8 +94,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-cdate=`date +%y%m%d`
-wgtFileDir="${wgtFileDir}/tmp.maps.${cdate}/"
 mkdir -p $wgtFileDir
 
 echo "Atmosphere Model Name: $atmName"
@@ -118,8 +119,16 @@ if [ "$atmName" != "$lndName" ] && [ ! -z "$atmName" ] && [ ! -z "$lndName" ]; t
   interp_method="conserve"   # bilinear, patch, conserve
   ncl gen_X_to_Y_wgts.ncl 'srcName="'${atmName}'"' 'srcGridName="'${atmGridName}'"' 'dstName="'${lndName}'"' 'dstGridName="'${lndGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"'
 
-  # do LND2ATM_FMAPNAME(aave)
+  # do LND2ATM_FMAPNAME (aave)
   interp_method="conserve"   # bilinear, patch, conserve
+  ncl gen_X_to_Y_wgts.ncl 'srcName="'${lndName}'"' 'srcGridName="'${lndGridName}'"' 'dstName="'${atmName}'"' 'dstGridName="'${atmGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"'
+
+  # do ATM2LND_FMAPNAME (patc)
+  interp_method="patch"   # bilinear, patch, conserve
+  ncl gen_X_to_Y_wgts.ncl 'srcName="'${atmName}'"' 'srcGridName="'${atmGridName}'"' 'dstName="'${lndName}'"' 'dstGridName="'${lndGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"'
+
+  # do LND2ATM_FMAPNAME (patc)
+  interp_method="patch"   # bilinear, patch, conserve
   ncl gen_X_to_Y_wgts.ncl 'srcName="'${lndName}'"' 'srcGridName="'${lndGridName}'"' 'dstName="'${atmName}'"' 'dstGridName="'${atmGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"'
 fi
 

@@ -61,87 +61,95 @@ end if
 if (InterpMethod .eq. "conserve") then
   interpString="aave"
 end if
+
 cdate=systemfunc("date +%y%m%d")
 wgtFileName="map_"+srcName+"_TO_"+dstName+"_"+interpString+"."+cdate+".nc"
-
-;----------------------------------------------------------------------
 
 srcGridName=srcGridDir+"/"+srcGridFile
 dstGridName=dstGridDir+"/"+dstGridFile
 
-;----------------------------------------------------------------------
-; Now generate weights file
-;----------------------------------------------------------------------
+OUTNAME_ALL = systemfunc("ls "+atmsrfDir+"/atmsrf_"+dstName+"_*.nc 2>/dev/null")
+OUTNAME=atmsrfDir+"/atmsrf_"+dstName+"_"+cdate+".nc"
 
 quote = inttochar(34)
 wcStrt     = systemfunc("date "+quote+"+%a %b %d %T %Z %Y"+quote)
 print(wcStrt+"")
 
-Opt                      = True
-Opt@InterpMethod         = InterpMethod
-Opt@ForceOverwrite       = True
-Opt@PrintTimings         = True
+if (ismissing(OUTNAME_ALL)) then
 
-ESMF_regrid_gen_weights(srcGridName,dstGridName,wgtFileDir+"/"+wgtFileName,Opt)
+  ;----------------------------------------------------------------------
+  ; Now generate weights file
+  ;----------------------------------------------------------------------
 
-delete(Opt)
+  Opt                      = True
+  Opt@InterpMethod         = InterpMethod
+  Opt@ForceOverwrite       = True
+  Opt@PrintTimings         = True
 
-; ==========================================================================================
+  ESMF_regrid_gen_weights(srcGridName,dstGridName,wgtFileDir+"/"+wgtFileName,Opt)
 
-fin = addfile(infile,"r")
+  delete(Opt)
 
-fraction_landuse_in = fin->fraction_landuse
-soilw_in = fin->soilw
+  ; ==========================================================================================
 
-Opt         = True
-fraction_landuse_out  = ESMF_regrid_with_weights(fraction_landuse_in,wgtFileDir+"/"+wgtFileName,Opt)
-soilw_out  = ESMF_regrid_with_weights(soilw_in,wgtFileDir+"/"+wgtFileName,Opt)
+  fin = addfile(infile,"r")
 
-if(any(ismissing(soilw_out))) then
-  print("soilw_out contains some missing values. Exiting.")
-  exit
+  fraction_landuse_in = fin->fraction_landuse
+  soilw_in = fin->soilw
+
+  Opt         = True
+  fraction_landuse_out  = ESMF_regrid_with_weights(fraction_landuse_in,wgtFileDir+"/"+wgtFileName,Opt)
+  soilw_out  = ESMF_regrid_with_weights(soilw_in,wgtFileDir+"/"+wgtFileName,Opt)
+
+  if(any(ismissing(soilw_out))) then
+    print("soilw_out contains some missing values. Exiting.")
+    exit
+  end if
+  if(any(ismissing(fraction_landuse_out))) then
+    print("fraction_landuse_out contains some missing values. Exiting.")
+    exit
+  end if
+
+  soilw_out!1="ncol"
+  fraction_landuse_out!1="ncol"
+
+  delete_VarAtts(soilw_out,(/"lat1d","lon1d","remap","_FillValue","missing_value"/))
+  delete_VarAtts(fraction_landuse_out,(/"lat1d","lon1d","remap","_FillValue","missing_value"/))
+
+  cdate=systemfunc("date +%y%m%d")
+  OUTNAME=atmsrfDir+"/atmsrf_"+dstName+"_"+cdate+".nc"
+  system("/bin/rm -f "+OUTNAME)   ; remove any pre-existing file
+  ncdf = addfile(OUTNAME ,"c")  ; open output netCDF file
+
+  print("writing: "+OUTNAME)
+
+  fAtt               = True            ; assign file attributes
+  fAtt@source_file   = srcGridDir+"/"+srcGridFile
+  fAtt@regrid_file   = wgtFileDir+"/"+wgtFileName
+  fAtt@creation_date = systemfunc ("date")
+  fileattdef( ncdf, fAtt )            ; copy file attributes
+
+  ncdf->fraction_landuse = fraction_landuse_out
+  ncdf->soilw  = soilw_out
+
+  ;
+  ;netcdf atmsrf_ne120np4_110920 {
+  ;dimensions:
+  ;	ncol = 777602 ;
+  ;	class = 11 ;
+  ;	month = 12 ;
+  ;variables:
+  ;	double fraction_landuse(class, ncol) ;
+  ;	double soilw(month, ncol) ;
+  ;}
+
+  ; cleanup
+  print("cleanin up...")
+  system("rm -v "+wgtFileDir+"/"+wgtFileName)
+
+else
+  print("OUTNAME "+OUTNAME_ALL(0)+" already exists!")
 end if
-if(any(ismissing(fraction_landuse_out))) then
-  print("fraction_landuse_out contains some missing values. Exiting.")
-  exit
-end if
-
-soilw_out!1="ncol"
-fraction_landuse_out!1="ncol"
-
-delete_VarAtts(soilw_out,(/"lat1d","lon1d","remap","_FillValue","missing_value"/))
-delete_VarAtts(fraction_landuse_out,(/"lat1d","lon1d","remap","_FillValue","missing_value"/))
-
-cdate=systemfunc("date +%y%m%d")
-OUTNAME=atmsrfDir+"/atmsrf_"+dstName+"_"+cdate+".nc"
-system("/bin/rm -f "+OUTNAME)   ; remove any pre-existing file
-ncdf = addfile(OUTNAME ,"c")  ; open output netCDF file
-
-print("writing: "+OUTNAME)
-
-fAtt               = True            ; assign file attributes
-fAtt@source_file   = srcGridDir+"/"+srcGridFile
-fAtt@regrid_file   = wgtFileDir+"/"+wgtFileName
-fAtt@creation_date = systemfunc ("date")
-fileattdef( ncdf, fAtt )            ; copy file attributes
-
-ncdf->fraction_landuse = fraction_landuse_out
-ncdf->soilw  = soilw_out
-
-;
-;netcdf atmsrf_ne120np4_110920 {
-;dimensions:
-;	ncol = 777602 ;
-;	class = 11 ;
-;	month = 12 ;
-;variables:
-;	double fraction_landuse(class, ncol) ;
-;	double soilw(month, ncol) ;
-;}
-
-; cleanup
-print("cleanin up...")
-system("rm -v "+wgtFileDir+"/"+wgtFileName)
 
 wallClockElapseTime(wcStrt, "Script runtime", 0)
 

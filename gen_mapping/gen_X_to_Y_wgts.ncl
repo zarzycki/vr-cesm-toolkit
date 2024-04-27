@@ -1,12 +1,4 @@
-;========================================================
-; TC_cross_and_latlon.ncl:   plots the PS, U, V, and T.
-;========================================================
-load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_code.ncl"
-load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/gsn_csm.ncl"
-load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/contributed.ncl"
-load "$NCARG_ROOT/lib/ncarg/nclscripts/csm/shea_util.ncl"
 load "$NCARG_ROOT/lib/ncarg/nclscripts/esmf/ESMF_regridding.ncl"
-;========================================================
 
 begin
 
@@ -41,10 +33,7 @@ end if
 cdate=systemfunc("date +%y%m%d")
 wgtFileName="map_"+srcName+"_TO_"+dstName+"_"+interpString+"."+cdate+".nc"
 
-
-;----------------------------------------------------------------------
-; Now generate weights file
-;----------------------------------------------------------------------
+OUTNAME_ALL = systemfunc("ls "+wgtFileDir+"/"+"map_"+srcName+"_TO_"+dstName+"_"+interpString+"*.nc 2>/dev/null")
 
 Opt                      = True
 Opt@InterpMethod         = InterpMethod
@@ -59,7 +48,12 @@ if (dstName .eq. "gland4km") then
   Opt@DstRegional=True
 end if
 
-ESMF_regrid_gen_weights(srcGridName,dstGridName,wgtFileDir+"/"+wgtFileName,Opt)
+if (ismissing(OUTNAME_ALL)) then
+  print("Generating "+wgtFileName)
+  ESMF_regrid_gen_weights(srcGridName,dstGridName,wgtFileDir+"/"+wgtFileName,Opt)
+else
+  print("wgtFileDir/wgtFileName: "+OUTNAME_ALL(0)+" already exists!")
+end if
 
 delete(Opt)
 

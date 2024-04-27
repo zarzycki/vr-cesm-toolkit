@@ -19,9 +19,10 @@
 #echo $EXODUSFILE
 
 ###### GRIDS
-EXODUSFILE="ne0np4natlanticwat.ne30x8.g"
-atmName="ne0np4natlanticwat.ne30x8"
-atmGridName="/glade/work/zarzycki/grids/scrip/ne0np4natlanticwat.ne30x8_np4_SCRIP.nc"
+EXODUSFILE="ne0np4natlanticref.ne30x8.g"
+atmName="ne0np4natlanticref.ne30x8"
+atmGridName="/glade/work/zarzycki/grids/scrip/ne0np4natlanticref.ne30x8_np4_SCRIP.nc"
+atmRefineLevel=8
 #lndName="ne128pg2"
 #lndGridName="/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/grids/scrip/ne128pg2_scrip.nc"
 rofName="r0125"
@@ -97,8 +98,13 @@ if [ "$do_e3sm_topo" == true ]; then
   echo $? ; date
   cd ..
 elif [ "$do_cesm_topo" == true ]; then
-  # DO PETER LAURITZEN STUFF HERE
-  echo "Need to put some CESM logic in, chief!"
+  cd cesm-topo/
+  #-W block=true \   # add this to qsub line to cause the script to wait until qsub is done
+  qsub \
+    -v SCRIPGRIDFILE="$atmGridName",OUTPUTGRIDNAME="$atmName",REFINELEV="$atmRefineLevel" \
+    cam-topo.sh
+  echo $? ; date
+  cd ..
 fi
 
 #---------------------------------------------------------------------------------------------
@@ -114,14 +120,14 @@ if [ "$generate_maps" == true ]; then
     --lndGridName "$lndGridName" \
     --rofName "$rofName" \
     --rofGridName "$rofGridName" \
-    --wgtFileDir "$SCRATCHDIR" \
+    --wgtFileDir "${OUTBASE}/grids/maps/" \
   )
   echo $? ; date
 
-  echo "Cleaning up gen_mapping"
-  mkdir -p ${OUTBASE}/grids/maps/
-  mv -v ${SCRATCHDIR}/tmp.maps.$cdate/map_*.nc ${OUTBASE}/grids/maps/
-  rm -rfv ${SCRATCHDIR}/tmp.maps.$cdate/
+#   echo "Cleaning up gen_mapping"
+#   mkdir -p ${OUTBASE}/grids/maps/
+#   mv -v ${SCRATCHDIR}/tmp.maps.$cdate/map_*.nc ${OUTBASE}/grids/maps/
+#   rm -rfv ${SCRATCHDIR}/tmp.maps.$cdate/
 
   cd ..
 fi

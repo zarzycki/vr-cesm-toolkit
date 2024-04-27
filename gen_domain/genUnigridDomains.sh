@@ -75,8 +75,11 @@ cdate=`date +%y%m%d`
 
 aaveMap=map_${ocnName}_TO_${atmName}_aave.${cdate}.nc
 
-if [[ -f "${OUTBASE}/domain.ocn.${atmName}_${ocnName}.${cdate}.nc" && -f "${OUTBASE}/domain.lnd.${atmName}_${ocnName}.${cdate}.nc" ]]; then
-  echo "GEN_DOMAIN: Both domain.ocn.${atmName}_${ocnName}.${cdate}.nc and domain.lnd.${atmName}_${ocnName}.${cdate}.nc already exist in ${OUTBASE}!"
+ocnFiles=$(ls "${OUTBASE}/domain.ocn.${atmName}_${ocnName}."*.nc 2> /dev/null)
+lndFiles=$(ls "${OUTBASE}/domain.lnd.${atmName}_${ocnName}."*.nc 2> /dev/null)
+
+if [[ -n "$ocnFiles" && -n "$lndFiles" ]]; then
+  echo "GEN_DOMAIN: At least one file matching each pattern exists in ${OUTBASE}!"
   echo "GEN_DOMAIN: Exiting."
   exit 0
 fi
