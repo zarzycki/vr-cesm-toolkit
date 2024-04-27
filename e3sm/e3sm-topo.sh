@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-#SBATCH --qos=regular
+#SBATCH --qos=premium
 #SBATCH --time=06:00:00
 #SBATCH --nodes=2
 #SBATCH --ntasks-per-node=128
@@ -37,6 +37,14 @@ EXODUS_NO_EXT="${EXODUSFILE%.*}"
 EXODUSFILE_PG="$EXODUS_NO_EXT"_pg"$SET_PG".g
 SCRIPFILE_PG="$EXODUS_NO_EXT"_pg"$SET_PG"_scrip.nc
 SCRIPFILE_NP="$EXODUS_NO_EXT"_np"$SET_NP"_scrip.nc
+
+TOPOFINALFILE=$TOPODIR/USGS-gtopo30_${EXODUS_NO_EXT}np${SET_NP}pg${SET_PG}_x${nsmooth}t.nc
+
+if [[ -f "${TOPOFINALFILE}" ]]; then
+  echo "E3SM_TOPO: ${TOPOFINALFILE} already exists!"
+  echo "E3SM_TOPO: Exiting."
+  exit 0
+fi
 
 ####
 
@@ -174,7 +182,7 @@ ${e3sm_root}/components/eam/tools/topo_tool/cube_to_target/cube_to_target \
 #########################################################################################
 
 ncks -A ${EXODUS_NO_EXT}np${SET_NP}pg${SET_PG}_smoothed_phis1.nc final.nc
-mv final.nc $TOPODIR/USGS-gtopo30_${EXODUS_NO_EXT}np${SET_NP}pg${SET_PG}_x${nsmooth}t.nc
+mv final.nc $TOPOFINALFILE
 
 #########################################################################################
 ## Cleanup
