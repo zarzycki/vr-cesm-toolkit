@@ -165,9 +165,13 @@ fi
 if [ "$atmName" != "$rofName" ] && [ ! -z "$atmName" ] && [ ! -z "$rofName" ]; then
   echo "Generating ATM <-> ROF maps..... "
 
-  # do ROF2OCN_FMAPNAME (aave)
+  # do ATM2ROF_FMAPNAME (aave)
   interp_method="conserve"   # bilinear, patch, conserve
   ncl gen_X_to_Y_wgts.ncl 'srcName="'${atmName}'"' 'srcGridName="'${atmGridName}'"' 'dstName="'${rofName}'"' 'dstGridName="'${rofGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"'
+
+  # do ROF2ATM_FMAPNAME (aave)
+  interp_method="conserve"   # bilinear, patch, conserve
+  ncl gen_X_to_Y_wgts.ncl 'srcName="'${rofName}'"' 'srcGridName="'${rofGridName}'"' 'dstName="'${atmName}'"' 'dstGridName="'${atmGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"'
 fi
 
 ############################# ROF <-> LND ########################################
