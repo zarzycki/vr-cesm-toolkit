@@ -1,0 +1,19 @@
+MACHINE="NCAR" # NERSC or NCAR <-- allows for machine-specific settings
+
+##### GRIDS
+INDEX="014"
+atmName="mpasa3-60-tclf${INDEX}"
+atmGridName="/glade/work/zarzycki/grids/scrip/mpasa3-60-tclf${INDEX}_scrip.nc"
+atmRefineLevel=20
+rofName="r8th"
+rofGridName="/glade/campaign/cesm/cesmdata/inputdata/lnd/clm2/mappingdata/grids/SCRIPgrid_0.125x0.125_nomask_c170126.nc"
+
+##### MASKS
+maskName="tx0.1v2"
+maskGridName="/glade/p/cesmdata/cseg/inputdata/share/scripgrids/tx0.1v2_090127.nc"
+
+do_e3sm_topo=false
+do_cesm_topo=true
+generate_maps=false
+generate_domain=true
+generate_atmsrf=true

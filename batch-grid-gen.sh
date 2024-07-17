@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/bin/bash
 
 #PBS -A P93300642
 #PBS -N batch-gen-vr
@@ -11,41 +11,37 @@
 ### This echos the line of the script we are on for debugging
 #set -x
 
-## Special logic for E3SM
-#INDEX=$1
-#EXODUSFILE="TClandfall-${INDEX}_ne48x4.g"
-#atmName="TClandfall-${INDEX}_ne48x4_pg2"
-#atmGridName="/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/grids/scrip/TClandfall-${INDEX}_ne48x4_pg2_scrip.nc"
-#echo $EXODUSFILE
+if [ -z "$1" ]; then
+  echo "Error: No configuration file provided."
+  echo "Usage: $0 config_file"
+  exit 1
+fi
 
-###### GRIDS
-EXODUSFILE="ne0np4natlanticref.ne30x8.g"
-atmName="ne0np4natlanticref.ne30x8"
-atmGridName="/glade/work/zarzycki/grids/scrip/ne0np4natlanticref.ne30x8_np4_SCRIP.nc"
-atmRefineLevel=8
-#lndName="ne128pg2"
-#lndGridName="/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/grids/scrip/ne128pg2_scrip.nc"
-rofName="r0125"
-rofGridName="/glade/campaign/cesm/cesmdata/inputdata/lnd/clm2/mappingdata/grids/SCRIPgrid_0.125x0.125_nomask_c170126.nc"
+CONFIG_FILE=$1
 
-##### MASKS
-# E3SM
-#maskName="oRRS15to5"
-#maskGridName="/global/cfs/cdirs/e3sm/inputdata/ocn/mpas-o/oRRS15to5/ocean.RRS.15-5km_scrip_151209.nc"
-#maskName="ICOS10"
-#maskGridName="/global/cfs/cdirs/e3sm/inputdata/ocn/mpas-o/ICOS10/ocean.ICOS10.scrip.211015.nc"
-# CESM
-maskName="tx0.1v2"
-maskGridName="/glade/p/cesmdata/cseg/inputdata/share/scripgrids/tx0.1v2_090127.nc"
+if [ ! -f "$CONFIG_FILE" ]; then
+  echo "Error: Configuration file '$CONFIG_FILE' does not exist."
+  exit 1
+fi
 
-do_e3sm_topo=false
-do_cesm_topo=false
-generate_maps=true
-generate_domain=true
-generate_atmsrf=true
+# Source the specified configuration file
+source $CONFIG_FILE
+
+# Get a date string in YYMMDD format
 cdate=`date +%y%m%d`
 
-MACHINE="NCAR" # NERSC or NCAR <-- allows for machine-specific settings
+# Check the MACHINE variable and re-execute the script if necessary
+# This allows us to run different shebang configurations on the machines
+# The SHELL_TYPE check is done to prevent infinite re-execution
+if [ "$MACHINE" == "NERSC" ] && [ "$SHELL_TYPE" != "bash" ]; then
+  echo "Updating NERSC shell"
+  export SHELL_TYPE="bash"
+  exec /bin/bash "$0" "$@"
+elif [ "$MACHINE" == "NCAR" ] && [ "$SHELL_TYPE" != "bash -l" ]; then
+  echo "Updating NCAR shell"
+  export SHELL_TYPE="bash -l"
+  exec /bin/bash -l "$0" "$@"
+fi
 
 # Conditional assignment based on MACHINE
 if [ "$MACHINE" = "NERSC" ]; then
@@ -73,13 +69,34 @@ fi
 # # Extract the filename
 # atmGridFilename="${atmGridName##*/}"
 
+echo "Exodus File: ${EXODUSFILE}"
+echo "Atmosphere Name: ${atmName}"
+echo "Atmosphere Grid Name: ${atmGridName}"
+echo "Atmosphere Refine Level: ${atmRefineLevel}"
+echo "Land Name: ${lndName}"
+echo "Land Grid Name: ${lndGridName}"
+echo "Ocean Name: ${ocnName}"
+echo "Ocean Grid Name: ${ocnGridName}"
+echo "River Name: ${rofName}"
+echo "River Grid Name: ${rofGridName}"
+echo "Mask Name: ${maskName}"
+echo "Mask Grid Name: ${maskGridName}"
+echo "Do E3SM Topo: ${do_e3sm_topo}"
+echo "Do CESM Topo: ${do_cesm_topo}"
+echo "Generate Maps: ${generate_maps}"
+echo "Generate Domain: ${generate_domain}"
+echo "Generate Atmosphere Surface: ${generate_atmsrf}"
+
 # Check for necessary binaries
 if ! command -v ncl >/dev/null 2>&1; then
   echo "ncl is not in the PATH. Please install/activate it." ; exit 1
 fi
-
 if ! command -v ESMF_RegridWeightGen >/dev/null 2>&1; then
   echo "ESMF_RegridWeightGen is not in the PATH. Please install/activate it." ; exit 1
+fi
+# File checks
+if [ ! -f "$atmGridName" ]; then
+  echo "Error: File does not exist: $atmGridName" ; exit 1
 fi
 
 set -e
@@ -101,7 +118,7 @@ elif [ "$do_cesm_topo" == true ]; then
   cd cesm-topo/
   #-W block=true \   # add this to qsub line to cause the script to wait until qsub is done
   qsub \
-    -v SCRIPGRIDFILE="$atmGridName",OUTPUTGRIDNAME="$atmName",REFINELEV="$atmRefineLevel" \
+    -v SCRIPGRIDFILE="$atmGridName",OUTPUTGRIDNAME="$atmName",REFINELEV="$atmRefineLevel",TOPODIR="${OUTBASE}/topo/" \
     cam-topo.sh
   echo $? ; date
   cd ..
@@ -193,3 +210,5 @@ if [ "$generate_atmsrf" == true ]; then
   cd ..
 
 fi
+
+echo "Done with grid_gen script!"
