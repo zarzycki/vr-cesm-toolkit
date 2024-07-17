@@ -10,6 +10,7 @@
 
 ### This echos the line of the script we are on for debugging
 #set -x
+MACHINE="NCAR" # NERSC or NCAR <-- allows for machine-specific settings
 
 ## Special logic for E3SM
 #INDEX=$1
@@ -19,13 +20,14 @@
 #echo $EXODUSFILE
 
 ###### GRIDS
-EXODUSFILE="ne0np4natlanticref.ne30x8.g"
-atmName="ne0np4natlanticref.ne30x8"
-atmGridName="/glade/work/zarzycki/grids/scrip/ne0np4natlanticref.ne30x8_np4_SCRIP.nc"
-atmRefineLevel=8
+#EXODUSFILE="nhemi_30_x4.g"
+INDEX="014"
+atmName="mpasa3-60-tclf${INDEX}"
+atmGridName="/glade/work/zarzycki/grids/scrip/mpasa3-60-tclf${INDEX}_scrip.nc"
+atmRefineLevel=20
 #lndName="ne128pg2"
 #lndGridName="/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/grids/scrip/ne128pg2_scrip.nc"
-rofName="r0125"
+rofName="r8th"
 rofGridName="/glade/campaign/cesm/cesmdata/inputdata/lnd/clm2/mappingdata/grids/SCRIPgrid_0.125x0.125_nomask_c170126.nc"
 
 ##### MASKS
@@ -39,13 +41,11 @@ maskName="tx0.1v2"
 maskGridName="/glade/p/cesmdata/cseg/inputdata/share/scripgrids/tx0.1v2_090127.nc"
 
 do_e3sm_topo=false
-do_cesm_topo=false
-generate_maps=true
+do_cesm_topo=true
+generate_maps=false
 generate_domain=true
 generate_atmsrf=true
 cdate=`date +%y%m%d`
-
-MACHINE="NCAR" # NERSC or NCAR <-- allows for machine-specific settings
 
 # Conditional assignment based on MACHINE
 if [ "$MACHINE" = "NERSC" ]; then
@@ -77,10 +77,28 @@ fi
 if ! command -v ncl >/dev/null 2>&1; then
   echo "ncl is not in the PATH. Please install/activate it." ; exit 1
 fi
-
 if ! command -v ESMF_RegridWeightGen >/dev/null 2>&1; then
   echo "ESMF_RegridWeightGen is not in the PATH. Please install/activate it." ; exit 1
 fi
+# File checks
+if [ ! -f "$atmGridName" ]; then
+  echo "Error: File does not exist: $atmGridName" ; exit 1
+fi
+
+echo "Exodus File: ${EXODUSFILE}"
+echo "Index: ${INDEX}"
+echo "Atmosphere Name: ${atmName}"
+echo "Atmosphere Grid Name: ${atmGridName}"
+echo "Atmosphere Refine Level: ${atmRefineLevel}"
+echo "River Name: ${rofName}"
+echo "River Grid Name: ${rofGridName}"
+echo "Mask Name: ${maskName}"
+echo "Mask Grid Name: ${maskGridName}"
+echo "Do E3SM Topo: ${do_e3sm_topo}"
+echo "Do CESM Topo: ${do_cesm_topo}"
+echo "Generate Maps: ${generate_maps}"
+echo "Generate Domain: ${generate_domain}"
+echo "Generate Atmosphere Surface: ${generate_atmsrf}"
 
 set -e
 
@@ -101,7 +119,7 @@ elif [ "$do_cesm_topo" == true ]; then
   cd cesm-topo/
   #-W block=true \   # add this to qsub line to cause the script to wait until qsub is done
   qsub \
-    -v SCRIPGRIDFILE="$atmGridName",OUTPUTGRIDNAME="$atmName",REFINELEV="$atmRefineLevel" \
+    -v SCRIPGRIDFILE="$atmGridName",OUTPUTGRIDNAME="$atmName",REFINELEV="$atmRefineLevel",TOPODIR="${OUTBASE}/topo/" \
     cam-topo.sh
   echo $? ; date
   cd ..
@@ -193,3 +211,5 @@ if [ "$generate_atmsrf" == true ]; then
   cd ..
 
 fi
+
+echo "Done with grid_gen script!"
