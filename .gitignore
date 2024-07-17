@@ -1,3 +1,4 @@
+cam-topo-gen.o*
 batch-gen-vr.o*
 slurm-*out
 sub_*
