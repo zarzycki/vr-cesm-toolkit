@@ -135,6 +135,8 @@ if [ "$generate_maps" == true ]; then
     --atmGridName "$atmGridName" \
     --lndName "$lndName" \
     --lndGridName "$lndGridName" \
+    --ocnName "$ocnName" \
+    --ocnGridName "$ocnGridName" \
     --rofName "$rofName" \
     --rofGridName "$rofGridName" \
     --wgtFileDir "${OUTBASE}/grids/maps/" \
