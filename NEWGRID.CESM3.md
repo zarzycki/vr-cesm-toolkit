@@ -126,7 +126,45 @@ Use Peter and Julio's topo tool.
 
 #### Initial condition file (atmosphere)
 
-The easiest way (IMO) is to just generate this with Betacast. You can also use interpic, HICCUP, or other tools.
+The easiest way (IMO) is just to generate this with Betacast. You can also use interpic, HICCUP, or other tools.
+
+```
+export BETACAST=/glade/u/home/zarzycki/betacast/
+RDADIR=/glade/campaign/collections/rda/data/ds633.0/
+SE_SCRIP=/glade/campaign/cesm/cesmdata/inputdata/share/scripgrids/ne30np4_091226_pentagons.nc
+SE_NAME="ne30"
+
+## Generate a weight file from ERA5 -> target grid
+(set -x; ncl ${BETACAST}/remapping/gen_analysis_to_model_wgt_file.ncl \
+'ANLGRID="era5_0.25x0.25"' \
+'ANLGRIDPATH="'${BETACAST}'/remapping/anl_scrip/"' \
+'DSTGRIDNAME="'${SE_NAME}'"' \
+'DSTGRIDFILE="'${SE_SCRIP}'"' \
+'WGTFILEDIR="./"' \
+)
+
+## This generates a WGTFILE named this:
+WGTFILE="./map_era5_0.25x0.25_TO_${SE_NAME}_patc.nc"
+
+## Invoke Betacast atm_to_cam
+ncl -n ${BETACAST}/atm_to_cam/atm_to_cam.ncl 'datasource="ERA5RDA"' \
+numlevels=32 \
+YYYYMMDDHH=2005082800 \
+'dycore="se"' \
+'data_filename = "'${RDADIR}'/e5.oper.invariant/197901/e5.oper.invariant.128_129_z.ll025sc.1979010100_1979010100.nc"' \
+'wgt_filename="'${WGTFILE}'"' \
+'RDADIR="'${RDADIR}'"' \
+mpas_as_cam=True \
+'model_topo_file="/glade/p/cesmdata/cseg/inputdata/atm/cam/topo/se/ne30np4_nc3000_Co060_Fi001_PF_nullRR_Nsw042_20171020.nc"' \
+'adjust_config=""' \
+compress_file=True \
+write_floats=True \
+add_cloud_vars=True \
+'se_inic = "./se_initial_condition.nc"'
+
+## Cleanup
+rm -v $WGTFILE
+```
 
 #### Dry deposition file (drydep_srf_file)
 
