@@ -1,1 +1,7 @@
 copied from /glade/work/skamaroc/MPAS-Tools/mesh_tools/mpas2esmf on 7/18/22
+
+On MacOS:
+
+Use conda to install netcdf, gfortran
+
+export LIBRARY_PATH="$LIBRARY_PATH:/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib"
