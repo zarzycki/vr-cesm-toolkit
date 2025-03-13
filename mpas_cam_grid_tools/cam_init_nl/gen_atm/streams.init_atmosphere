@@ -1,0 +1,14 @@
+<streams>
+<immutable_stream name="input"
+                  type="input"
+                  filename_template="__MPAS_3D_FILE__"
+                  input_interval="initial_only" />
+
+<immutable_stream name="output"
+                  type="output"
+                  clobber_mode="overwrite"
+                  filename_template="__MPAS_INIT_FILE__"
+                  packages="initial_conds"
+                  output_interval="initial_only" />
+
+</streams>

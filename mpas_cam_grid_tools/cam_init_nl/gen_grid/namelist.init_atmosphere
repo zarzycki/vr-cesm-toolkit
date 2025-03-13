@@ -1,0 +1,18 @@
+&nhyd_model
+    config_init_case = 13
+    config_theta_adv_order = 3
+    config_coef_3rd_order = 0.25
+/
+&dimensions
+    config_nvertlevels = __NLEVELS__
+    config_nsoillevels = 1
+    config_nfglevels = 1
+    config_nfgsoillevels = 1
+/
+&vertical_grid
+    config_specified_zeta_levels = '__LEVELS_FILE__'
+    config_nsmterrain = 0
+    config_smooth_surfaces = true
+    config_dzmin = 0.3
+    config_nsm = 30
+/
