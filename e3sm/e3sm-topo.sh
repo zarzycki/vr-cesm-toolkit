@@ -1,10 +1,11 @@
 #!/bin/bash -l
 
+#SBATCH -C cpu
+#SBATCH -A m2637
 #SBATCH --qos=premium
 #SBATCH --time=06:00:00
 #SBATCH --nodes=2
 #SBATCH --ntasks-per-node=128
-#SBATCH --constraint=cpu
 
 #### Settings
 
@@ -18,7 +19,7 @@ if [ "$#" -eq 3 ]; then
   GRIDSDIR=$2
   TOPODIR=$3
 else
-  EXODUSFILE=conus-tight_16x8.g
+  EXODUSFILE=SnowEater_WUS_30x32.g
   GRIDSDIR=/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/grids/
   TOPODIR=/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/topo/
 fi
@@ -182,7 +183,8 @@ ${e3sm_root}/components/eam/tools/topo_tool/cube_to_target/cube_to_target \
 #########################################################################################
 
 ncks -A ${EXODUS_NO_EXT}np${SET_NP}pg${SET_PG}_smoothed_phis1.nc final.nc
-mv final.nc $TOPOFINALFILE
+mv -v final.nc $TOPOFINALFILE
+echo "New topo file: $TOPOFINALFILE"
 
 #########################################################################################
 ## Cleanup

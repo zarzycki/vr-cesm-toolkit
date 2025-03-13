@@ -11,3 +11,15 @@ MACHINE="derecho"
 
 ./genUnigridDomains.sh $atmName $atmGridName $ocnName $ocnGridName $OUTBASE $PATH_TO_MAPPING $MACHINE
 ```
+
+```
+./genUnigridDomains.sh \
+  SnowEater_WUS_30x8_pg2 \
+  /global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/grids/scrip/SnowEater_WUS_30x8_pg2_scrip.nc \
+  oRRS18to6v3 \
+  /global/cfs/cdirs/e3sm/inputdata/ocn/mpas-o/oRRS18to6v3/ocean.oRRS18to6v3.scrip.181106.nc \
+  /global/cfs/cdirs/m2637/E3SM_SCREAM_files/grids/domains/ \
+  /global/homes/c/czarzyck/E3SM-20230714/cime/tools/mapping/ \
+  NERSC
+```
+
