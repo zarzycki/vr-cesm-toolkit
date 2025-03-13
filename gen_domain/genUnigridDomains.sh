@@ -87,6 +87,7 @@ fi
 echo "Making tmp dir and linking"
 mkdir -p $SCRATCH/gen_domain_files/
 cd $SCRATCH/gen_domain_files/
+ls -l $PATH_TO_MAPPING/gen_domain_files/gen_domain
 ln -s $PATH_TO_MAPPING/gen_domain_files/gen_domain .
 echo "Done!"
 
