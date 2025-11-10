@@ -3,23 +3,32 @@
 #SBATCH -C cpu
 #SBATCH -A m2637
 #SBATCH --qos=premium
-#SBATCH --time=06:00:00
+#SBATCH --time=03:00:00
 #SBATCH --nodes=2
 #SBATCH --ntasks-per-node=128
 
+echo "Command used: $0 \"$@\""
+echo "PID       : $$"
+echo "Host      : $(hostname)"
+echo "User      : $(whoami)"
+echo "Start time: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+echo "Shell     : $SHELL"
+
 #### Settings
 
-export NCARG_ROOT=/global/homes/c/czarzyck/.conda/pkgs/ncl-6.6.2-h3fdc804_41/
-PATHTONCL=/global/homes/c/czarzyck/.conda/envs/e3sm_unified_1.8.1_nompi/bin/
+export NCARG_ROOT=/global/homes/c/czarzyck/.conda/pkgs/ncl-6.6.2-h7cb714c_54/
+PATHTONCL=/global/common/software/m2637/czarzyck/conda_envs/betacast/bin/
 
 set -e
+set -o errtrace
+trap 'echo "ERROR: Command \"${BASH_COMMAND}\" failed at line $LINENO"; exit 1' ERR
 
 if [ "$#" -eq 3 ]; then
   EXODUSFILE=$1
   GRIDSDIR=$2
   TOPODIR=$3
 else
-  EXODUSFILE=SnowEater_WUS_30x32.g
+  EXODUSFILE=TClandfall-002_ne192x8.g
   GRIDSDIR=/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/grids/
   TOPODIR=/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/topo/
 fi
@@ -27,8 +36,6 @@ fi
 SET_NP=4
 SET_PG=2
 
-e3sm_root=/global/homes/c/czarzyck/E3SM-20230714/
-machine=perlmutter-nocuda-gnu
 INPUTTOPO=/global/cfs/cdirs/e3sm/inputdata/atm/cam/hrtopo/USGS-topo-cube3000.nc
 nsmooth=6
 
@@ -47,17 +54,6 @@ if [[ -f "${TOPOFINALFILE}" ]]; then
   exit 0
 fi
 
-####
-
-homme_tool_root=${e3sm_root}/components/homme/test/tool
-EXODUSDIR=$GRIDSDIR/exodus
-SCRIPDIR=$GRIDSDIR/scrip
-TEMPLATEDIR=$GRIDSDIR/template
-mkdir -p $EXODUSDIR
-mkdir -p $SCRIPDIR
-mkdir -p $TEMPLATEDIR
-mkdir -p $TOPODIR
-
 #####
 
 module purge
@@ -71,8 +67,21 @@ module load cray-hdf5-parallel/1.12.2.3
 module load cray-netcdf-hdf5parallel/4.9.0.3
 module load cray-parallel-netcdf/1.12.3.3
 module load cmake/3.24.3
-module load evp-patch
-source /global/common/software/e3sm/anaconda_envs/load_latest_e3sm_unified_pm-cpu.sh
+module load craype-network-ofi      # added 11/25 for slingshot
+source /global/common/software/e3sm/anaconda_envs/load_e3sm_unified_1.9.3_pm-cpu.sh
+machine=perlmutter-nocuda-gnu
+e3sm_root=/global/homes/c/czarzyck/E3SM-20230714/
+
+####
+
+homme_tool_root=${e3sm_root}/components/homme/test/tool
+EXODUSDIR=$GRIDSDIR/exodus
+SCRIPDIR=$GRIDSDIR/scrip
+TEMPLATEDIR=$GRIDSDIR/template
+mkdir -p $EXODUSDIR
+mkdir -p $SCRIPDIR
+mkdir -p $TEMPLATEDIR
+mkdir -p $TOPODIR
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -83,13 +92,16 @@ cd ${homme_tool_root}
 ## Get SCRIP grid for PG
 #########################################################################################
 
+#conda activate betacast
 GenerateVolumetricMesh --in $EXODUSDIR/$EXODUSFILE --out $EXODUSDIR/$EXODUSFILE_PG --np $SET_PG --uniform
 ConvertMeshToSCRIP --in $EXODUSDIR/$EXODUSFILE_PG --out $SCRIPDIR/$SCRIPFILE_PG
+#conda deactivate
 
 #########################################################################################
 ## Set env, navigate to env, build if needed
 #########################################################################################
 
+# echo "Configuring..."
 # cmake \
 #     -C ${homme_tool_root}/../../cmake/machineFiles/${machine}.cmake \
 #     -DBUILD_HOMME_WITHOUT_PIOLIBRARY=OFF \
@@ -97,7 +109,9 @@ ConvertMeshToSCRIP --in $EXODUSDIR/$EXODUSFILE_PG --out $SCRIPDIR/$SCRIPFILE_PG
 #     -DUSE_QUEUING:BOOL=OFF \
 #     -DPREQX_PLEV=26 ${homme_tool_root}/../../
 #
+# echo "Making..."
 # make -j4 homme_tool
+# echo "... done making..."
 
 #########################################################################################
 ## Create consistent SCRIP for GLL
@@ -124,7 +138,7 @@ io_stride = 16
 /
 EOF
 
-srun -n 64 ./src/tool/homme_tool < input.nl
+srun --mpi=pmix -n 1 ./src/tool/homme_tool < input.nl
 
 #~~ Creates ne0np4_tmp1.nc
 #~~ Now we convert to SCRIP
@@ -166,7 +180,7 @@ infilenames = 'out.nc', '${EXODUS_NO_EXT}np${SET_NP}pg${SET_PG}_smoothed_phis'
 /
 EOF
 
-srun -n 64 ./src/tool/homme_tool < input.nl
+srun --mpi=pmix -n 1 ./src/tool/homme_tool < input.nl
 
 #########################################################################################
 ## Recompute SGH, etc.
