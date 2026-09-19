@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ################################################################
-#PBS -N ncl-maps
+#PBS -N gen-maps
 #PBS -A P54048000
 #PBS -l walltime=01:00:00
 #PBS -q regular
@@ -11,8 +11,6 @@
 #PBS -l select=1:ncpus=36
 ################################################################
 
-#export NCARG_ROOT=/global/homes/c/czarzyck/.conda/pkgs/ncl-6.6.2-h3fdc804_41/
-#PATHTONCL=/global/homes/c/czarzyck/.conda/envs/e3sm_unified_1.8.1_nompi/bin/
 
 # Init to empty strings
 atmName="" atmGridName="" lndName="" lndGridName="" ocnName="" ocnGridName="" rofName="" rofGridName="" glcName="" glcGridName="" wavName="" wavGridName="" wgtFileDir=""
@@ -117,19 +115,19 @@ if [ "$atmName" != "$lndName" ] && [ ! -z "$atmName" ] && [ ! -z "$lndName" ]; t
 
   # do ATM2LND_FMAPNAME (aave)
   interp_method="conserve"   # bilinear, patch, conserve
-  (set -x; ncl gen_X_to_Y_wgts.ncl 'srcName="'${atmName}'"' 'srcGridName="'${atmGridName}'"' 'dstName="'${lndName}'"' 'dstGridName="'${lndGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
+  (set -x; python gen_X_to_Y_wgts.py 'srcName="'${atmName}'"' 'srcGridName="'${atmGridName}'"' 'dstName="'${lndName}'"' 'dstGridName="'${lndGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
 
   # do LND2ATM_FMAPNAME (aave)
   interp_method="conserve"   # bilinear, patch, conserve
-  (set -x; ncl gen_X_to_Y_wgts.ncl 'srcName="'${lndName}'"' 'srcGridName="'${lndGridName}'"' 'dstName="'${atmName}'"' 'dstGridName="'${atmGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
+  (set -x; python gen_X_to_Y_wgts.py 'srcName="'${lndName}'"' 'srcGridName="'${lndGridName}'"' 'dstName="'${atmName}'"' 'dstGridName="'${atmGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
 
   # do ATM2LND_FMAPNAME (patc)
   interp_method="patch"   # bilinear, patch, conserve
-  (set -x; ncl gen_X_to_Y_wgts.ncl 'srcName="'${atmName}'"' 'srcGridName="'${atmGridName}'"' 'dstName="'${lndName}'"' 'dstGridName="'${lndGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
+  (set -x; python gen_X_to_Y_wgts.py 'srcName="'${atmName}'"' 'srcGridName="'${atmGridName}'"' 'dstName="'${lndName}'"' 'dstGridName="'${lndGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
 
   # do LND2ATM_FMAPNAME (patc)
   interp_method="patch"   # bilinear, patch, conserve
-  (set -x; ncl gen_X_to_Y_wgts.ncl 'srcName="'${lndName}'"' 'srcGridName="'${lndGridName}'"' 'dstName="'${atmName}'"' 'dstGridName="'${atmGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
+  (set -x; python gen_X_to_Y_wgts.py 'srcName="'${lndName}'"' 'srcGridName="'${lndGridName}'"' 'dstName="'${atmName}'"' 'dstGridName="'${atmGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
 fi
 
 ############################# ATM <-> OCN ########################################
@@ -139,15 +137,15 @@ if [ "$atmName" != "$ocnName" ] && [ ! -z "$atmName" ] && [ ! -z "$ocnName" ]; t
 
   # do ATM2OCN_FMAPNAME (aave)
   interp_method="conserve"   # bilinear, patch, conserve
-  (set -x; ncl gen_X_to_Y_wgts.ncl 'srcName="'${atmName}'"' 'srcGridName="'${atmGridName}'"' 'dstName="'${ocnName}'"' 'dstGridName="'${ocnGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
+  (set -x; python gen_X_to_Y_wgts.py 'srcName="'${atmName}'"' 'srcGridName="'${atmGridName}'"' 'dstName="'${ocnName}'"' 'dstGridName="'${ocnGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
 
   # do ATM2OCN_SMAPNAME and ATM2OCN_VMAPNAME (blin)
   interp_method="bilinear"   # bilinear, patch, conserve
-  (set -x; ncl gen_X_to_Y_wgts.ncl 'srcName="'${atmName}'"' 'srcGridName="'${atmGridName}'"' 'dstName="'${ocnName}'"' 'dstGridName="'${ocnGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
+  (set -x; python gen_X_to_Y_wgts.py 'srcName="'${atmName}'"' 'srcGridName="'${atmGridName}'"' 'dstName="'${ocnName}'"' 'dstGridName="'${ocnGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
 
   # do OCN2ATM_FMAPNAME and OCN2ATM_SMAPNAME (aave)
   interp_method="conserve"   # bilinear, patch, conserve
-  (set -x; ncl gen_X_to_Y_wgts.ncl 'srcName="'${ocnName}'"' 'srcGridName="'${ocnGridName}'"' 'dstName="'${atmName}'"' 'dstGridName="'${atmGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
+  (set -x; python gen_X_to_Y_wgts.py 'srcName="'${ocnName}'"' 'srcGridName="'${ocnGridName}'"' 'dstName="'${atmName}'"' 'dstGridName="'${atmGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
 fi
 
 ############################# ROF <-> OCN ########################################
@@ -157,7 +155,7 @@ if [ "$ocnName" != "$rofName" ] && [ ! -z "$ocnName" ] && [ ! -z "$rofName" ]; t
 
   # do ROF2OCN_FMAPNAME (aave)
   interp_method="conserve"   # bilinear, patch, conserve
-  (set -x; ncl gen_X_to_Y_wgts.ncl 'srcName="'${rofName}'"' 'srcGridName="'${rofGridName}'"' 'dstName="'${ocnName}'"' 'dstGridName="'${ocnGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
+  (set -x; python gen_X_to_Y_wgts.py 'srcName="'${rofName}'"' 'srcGridName="'${rofGridName}'"' 'dstName="'${ocnName}'"' 'dstGridName="'${ocnGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
 fi
 
 ############################# ROF <-> ATM ########################################
@@ -167,11 +165,11 @@ if [ "$atmName" != "$rofName" ] && [ ! -z "$atmName" ] && [ ! -z "$rofName" ]; t
 
   # do ATM2ROF_FMAPNAME (aave)
   interp_method="conserve"   # bilinear, patch, conserve
-  (set -x; ncl gen_X_to_Y_wgts.ncl 'srcName="'${atmName}'"' 'srcGridName="'${atmGridName}'"' 'dstName="'${rofName}'"' 'dstGridName="'${rofGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
+  (set -x; python gen_X_to_Y_wgts.py 'srcName="'${atmName}'"' 'srcGridName="'${atmGridName}'"' 'dstName="'${rofName}'"' 'dstGridName="'${rofGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
 
   # do ROF2ATM_FMAPNAME (aave)
   interp_method="conserve"   # bilinear, patch, conserve
-  (set -x; ncl gen_X_to_Y_wgts.ncl 'srcName="'${rofName}'"' 'srcGridName="'${rofGridName}'"' 'dstName="'${atmName}'"' 'dstGridName="'${atmGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
+  (set -x; python gen_X_to_Y_wgts.py 'srcName="'${rofName}'"' 'srcGridName="'${rofGridName}'"' 'dstName="'${atmName}'"' 'dstGridName="'${atmGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
 fi
 
 ############################# ROF <-> LND ########################################
@@ -181,11 +179,11 @@ if [ "$lndName" != "$rofName" ] && [ ! -z "$lndName" ] && [ ! -z "$rofName" ]; t
 
   # do LND2ROF_FMAPNAME (aave)
   interp_method="conserve"   # bilinear, patch, conserve
-  (set -x; ncl gen_X_to_Y_wgts.ncl 'srcName="'${lndName}'"' 'srcGridName="'${lndGridName}'"' 'dstName="'${rofName}'"' 'dstGridName="'${rofGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
+  (set -x; python gen_X_to_Y_wgts.py 'srcName="'${lndName}'"' 'srcGridName="'${lndGridName}'"' 'dstName="'${rofName}'"' 'dstGridName="'${rofGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
 
   # do ROF2LND_FMAPNAME (aave)
   interp_method="conserve"   # bilinear, patch, conserve
-  (set -x; ncl gen_X_to_Y_wgts.ncl 'srcName="'${rofName}'"' 'srcGridName="'${rofGridName}'"' 'dstName="'${lndName}'"' 'dstGridName="'${lndGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
+  (set -x; python gen_X_to_Y_wgts.py 'srcName="'${rofName}'"' 'srcGridName="'${rofGridName}'"' 'dstName="'${lndName}'"' 'dstGridName="'${lndGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
 fi
 
 ############################# GLC <-> LND ########################################
@@ -195,15 +193,15 @@ if [ "$lndName" != "$glcName" ] && [ ! -z "$lndName" ] && [ ! -z "$glcName" ]; t
 
   # do LND2GLC_FMAPNAME (aave)
   interp_method="conserve"   # bilinear, patch, conserve
-  (set -x; ncl gen_X_to_Y_wgts.ncl 'srcName="'${lndName}'"' 'srcGridName="'${lndGridName}'"' 'dstName="'${glcName}'"' 'dstGridName="'${glcGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
+  (set -x; python gen_X_to_Y_wgts.py 'srcName="'${lndName}'"' 'srcGridName="'${lndGridName}'"' 'dstName="'${glcName}'"' 'dstGridName="'${glcGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
 
   # do LND2GLC_SMAPNAME (blin)
   interp_method="bilinear"   # bilinear, patch, conserve
-  (set -x; ncl gen_X_to_Y_wgts.ncl 'srcName="'${lndName}'"' 'srcGridName="'${lndGridName}'"' 'dstName="'${glcName}'"' 'dstGridName="'${glcGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
+  (set -x; python gen_X_to_Y_wgts.py 'srcName="'${lndName}'"' 'srcGridName="'${lndGridName}'"' 'dstName="'${glcName}'"' 'dstGridName="'${glcGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
 
   # do GLC2LND_FMAPNAME, GLC2LND_SMAPNAME (aave)
   interp_method="conserve"   # bilinear, patch, conserve
-  (set -x; ncl gen_X_to_Y_wgts.ncl 'srcName="'${glcName}'"' 'srcGridName="'${glcGridName}'"' 'dstName="'${lndName}'"' 'dstGridName="'${lndGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
+  (set -x; python gen_X_to_Y_wgts.py 'srcName="'${glcName}'"' 'srcGridName="'${glcGridName}'"' 'dstName="'${lndName}'"' 'dstGridName="'${lndGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
 fi
 
 ############################# WAV <-> ATM ########################################
@@ -213,10 +211,10 @@ if [ "$wavName" != "$atmName" ] && [ ! -z "$wavName" ] && [ ! -z "$atmName" ]; t
 
   # do ATM2WAV_SMAPNAME (blin)
   interp_method="bilinear"   # bilinear, patch, conserve
-  (set -x; ncl gen_X_to_Y_wgts.ncl 'srcName="'${atmName}'"' 'srcGridName="'${atmGridName}'"' 'dstName="'${wavName}'"' 'dstGridName="'${wavGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
+  (set -x; python gen_X_to_Y_wgts.py 'srcName="'${atmName}'"' 'srcGridName="'${atmGridName}'"' 'dstName="'${wavName}'"' 'dstGridName="'${wavGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
 
   # do WAV2ATM_SMAPNAME (blin)
   interp_method="bilinear"   # bilinear, patch, conserve
-  (set -x; ncl gen_X_to_Y_wgts.ncl 'srcName="'${wavName}'"' 'srcGridName="'${wavGridName}'"' 'dstName="'${atmName}'"' 'dstGridName="'${atmGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
+  (set -x; python gen_X_to_Y_wgts.py 'srcName="'${wavName}'"' 'srcGridName="'${wavGridName}'"' 'dstName="'${atmName}'"' 'dstGridName="'${atmGridName}'"' 'wgtFileDir="'${wgtFileDir}'"' 'InterpMethod="'${interp_method}'"' )
 fi
 
