@@ -13,6 +13,9 @@
 # If on pm-cpu
 #source /global/common/software/e3sm/anaconda_envs/load_latest_e3sm_unified_pm-cpu.sh
 
+# Path to this script, needed to find generate_domain_files_E3SM.py after we cd
+SCRIPTPATH="$( cd -- "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 ; pwd -P )"
+
 echo "$# args passed in!"
 
 if [ "$#" -eq 7 ]; then
@@ -45,8 +48,8 @@ else
 
   #atmGridName is the path to the scrip file of the VR mesh
   # Top level path to CIME mapping tools
-  # Note: need to have write access to this directory, so either copy the exec
-  # or checkout and build in your own dir
+  # NOTE: no longer used, we now use the E3SM python gen_domain in this repo,
+  # but retained so the calling interface is unchanged
   #PATH_TO_MAPPING="/glade/u/home/zarzycki/work/cesm2_2_0/cime/tools/mapping/"
   PATH_TO_MAPPING="/global/homes/c/czarzyck/E3SM-20230714/cime/tools/mapping/"
   MACHINE=""
@@ -84,11 +87,9 @@ if [[ -n "$ocnFiles" && -n "$lndFiles" ]]; then
   exit 0
 fi
 
-echo "Making tmp dir and linking"
+echo "Making tmp dir"
 mkdir -p $SCRATCH/gen_domain_files/
 cd $SCRATCH/gen_domain_files/
-ls -l $PATH_TO_MAPPING/gen_domain_files/gen_domain
-ln -s $PATH_TO_MAPPING/gen_domain_files/gen_domain .
 echo "Done!"
 
 # do ATM2OCN_FMAPNAME (aave)
@@ -99,8 +100,11 @@ ESMF_RegridWeightGen --ignore_unmapped -m ${interp_method} -w ${aaveMap} -s ${oc
 #----------------------------------------------------------------------
 # CREATE DOMAIN FILES
 #----------------------------------------------------------------------
+# Python replacement for the legacy CIME gen_domain binary. --date-stamp is
+# passed so filenames keep the YYMMDD stamp gen_domain used (python defaults
+# to YYYYMMDD), which the mv below relies on.
 
-./gen_domain -m ${aaveMap} -o ${ocnName} -l ${atmName}
+python ${SCRIPTPATH}/generate_domain_files_E3SM.py -m ${aaveMap} -o ${ocnName} -l ${atmName} --date-stamp ${cdate}
 
 #----------------------------------------------------------------------
 # MOVING FILES + CLEANUP
@@ -112,4 +116,3 @@ mv -v domain*${atmName}*${cdate}*nc ${OUTBASE}
 # Remove mapping files since they are large and we really only needed aave for domains anyway
 rm -fv map_*.nc
 rm -fv domain*.nc
-rm -fv gen_domain
