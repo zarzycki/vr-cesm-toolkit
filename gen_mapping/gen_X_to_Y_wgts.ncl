@@ -34,6 +34,7 @@ cdate=systemfunc("date +%y%m%d")
 wgtFileName="map_"+srcName+"_TO_"+dstName+"_"+interpString+"."+cdate+".nc"
 
 OUTNAME_ALL = systemfunc("ls "+wgtFileDir+"/"+"map_"+srcName+"_TO_"+dstName+"_"+interpString+"*.nc 2>/dev/null")
+print("OUTNAME_ALL: "+OUTNAME_ALL)
 
 Opt                      = True
 Opt@InterpMethod         = InterpMethod
@@ -63,7 +64,7 @@ if (isfilevar(f, "centerCoords")) then
 end if
 delete(f)
 
-if (ismissing(OUTNAME_ALL)) then
+if (all(ismissing(OUTNAME_ALL))) then
   print("Generating "+wgtFileName)
   ESMF_regrid_gen_weights(srcGridName,dstGridName,wgtFileDir+"/"+wgtFileName,Opt)
 else
