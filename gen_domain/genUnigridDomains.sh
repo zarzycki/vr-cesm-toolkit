@@ -62,7 +62,7 @@ echo "Using PATH_TO_MAPPING: $PATH_TO_MAPPING"
 echo "Using MACHINE: $MACHINE"
 
 if [ "$MACHINE" == "NERSC" ]; then
-  conda activate e3sm_unified_1.8.1_nompi
+  source /global/common/software/e3sm/anaconda_envs/load_latest_e3sm_unified_pm-cpu.sh
 fi
 if [ "$MACHINE" == "NCAR" ]; then
   module load esmf
