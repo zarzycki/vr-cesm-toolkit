@@ -16,8 +16,12 @@ echo "Shell     : $SHELL"
 
 #### Settings
 
-export NCARG_ROOT=/global/homes/c/czarzyck/.conda/pkgs/ncl-6.6.2-h7cb714c_54/
-PATHTONCL=/global/common/software/m2637/czarzyck/conda_envs/betacast/bin/
+# Path to this script, needed to find HOMME2SCRIP.py after we cd to the HOMME tool
+SCRIPTPATH="$( cd -- "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 ; pwd -P )"
+
+set +e
+trap - ERR
+source /opt/cray/pe/cpe/24.07/restore_lmod_system_defaults.sh
 
 set -e
 set -o errtrace
@@ -144,7 +148,7 @@ srun --mpi=pmix -n 1 ./src/tool/homme_tool < input.nl
 #~~ Now we convert to SCRIP
 
 mv ne0np4_tmp1.nc ne0np4_tmp.nc
-set +e ; ${PATHTONCL}/ncl ncl/HOMME2SCRIP.ncl name=\"ne0np4\" ne=0 np=4 ; set -e
+set +e ; python ${SCRIPTPATH}/HOMME2SCRIP.py name=\"ne0np4\" ne=0 np=4 ; set -e
 mv -v ne0np4_scrip.nc $SCRIPDIR/$SCRIPFILE_NP
 rm -v ne0np4_tmp.nc
 

@@ -59,15 +59,6 @@ fi
 
 if [ "$MACHINE" == "NERSC" ]; then
   source /global/common/software/e3sm/anaconda_envs/load_latest_e3sm_unified_pm-cpu.sh
-  # e3sm_unified has no NCL, so borrow betacast's for gen_mapping. Nothing else
-  # needs it anymore, so skip the symlink when we aren't generating maps.
-  if [ "$generate_maps" == true ]; then
-    mkdir -p "$HOME/bin/ncl-fallback"
-    ln -sf \
-      /global/common/software/m2637/czarzyck/conda_envs/betacast/bin/ncl \
-      "$HOME/bin/ncl-fallback/ncl"
-    export PATH="$PATH:$HOME/bin/ncl-fallback"
-  fi
 fi
 if [ "$MACHINE" == "NCAR" ]; then
   module load esmf
@@ -97,9 +88,14 @@ echo "Generate Domain: ${generate_domain}"
 echo "Generate Atmosphere Surface: ${generate_atmsrf}"
 
 # Check for necessary binaries, but only for the stages we are actually running.
-# gen_mapping is the last stage that needs NCL; gen_atmsrf is pure python + NCO.
-if [ "$generate_maps" == true ] && ! command -v ncl >/dev/null 2>&1; then
-  echo "ncl is not in the PATH (needed by gen_mapping). Please install/activate it." ; exit 1
+# Every stage is now pure python + NCO/ESMF, nothing needs NCL.
+if [ "$generate_maps" == true ]; then
+  if ! command -v ncremap >/dev/null 2>&1; then
+    echo "ncremap is not in the PATH (needed by gen_mapping). Please install/activate NCO." ; exit 1
+  fi
+  if ! command -v python >/dev/null 2>&1; then
+    echo "python is not in the PATH (needed by gen_mapping). Please install/activate it." ; exit 1
+  fi
 fi
 if [ "$generate_domain" == true ] && ! command -v ESMF_RegridWeightGen >/dev/null 2>&1; then
   echo "ESMF_RegridWeightGen is not in the PATH (needed by gen_domain). Please install/activate it." ; exit 1
