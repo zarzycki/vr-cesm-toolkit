@@ -58,7 +58,16 @@ else
 fi
 
 if [ "$MACHINE" == "NERSC" ]; then
-  conda activate e3sm_unified_1.8.1_nompi
+  source /global/common/software/e3sm/anaconda_envs/load_latest_e3sm_unified_pm-cpu.sh
+  # e3sm_unified has no NCL, so borrow betacast's for gen_mapping. Nothing else
+  # needs it anymore, so skip the symlink when we aren't generating maps.
+  if [ "$generate_maps" == true ]; then
+    mkdir -p "$HOME/bin/ncl-fallback"
+    ln -sf \
+      /global/common/software/m2637/czarzyck/conda_envs/betacast/bin/ncl \
+      "$HOME/bin/ncl-fallback/ncl"
+    export PATH="$PATH:$HOME/bin/ncl-fallback"
+  fi
 fi
 if [ "$MACHINE" == "NCAR" ]; then
   module load esmf
@@ -87,12 +96,21 @@ echo "Generate Maps: ${generate_maps}"
 echo "Generate Domain: ${generate_domain}"
 echo "Generate Atmosphere Surface: ${generate_atmsrf}"
 
-# Check for necessary binaries
-if ! command -v ncl >/dev/null 2>&1; then
-  echo "ncl is not in the PATH. Please install/activate it." ; exit 1
+# Check for necessary binaries, but only for the stages we are actually running.
+# gen_mapping is the last stage that needs NCL; gen_atmsrf is pure python + NCO.
+if [ "$generate_maps" == true ] && ! command -v ncl >/dev/null 2>&1; then
+  echo "ncl is not in the PATH (needed by gen_mapping). Please install/activate it." ; exit 1
 fi
-if ! command -v ESMF_RegridWeightGen >/dev/null 2>&1; then
-  echo "ESMF_RegridWeightGen is not in the PATH. Please install/activate it." ; exit 1
+if [ "$generate_domain" == true ] && ! command -v ESMF_RegridWeightGen >/dev/null 2>&1; then
+  echo "ESMF_RegridWeightGen is not in the PATH (needed by gen_domain). Please install/activate it." ; exit 1
+fi
+if [ "$generate_atmsrf" == true ]; then
+  if ! command -v ncremap >/dev/null 2>&1; then
+    echo "ncremap is not in the PATH (needed by gen_atmsrf). Please install/activate NCO." ; exit 1
+  fi
+  if ! command -v python >/dev/null 2>&1; then
+    echo "python is not in the PATH (needed by gen_atmsrf). Please install/activate it." ; exit 1
+  fi
 fi
 # File checks
 if [ ! -f "$atmGridName" ]; then
@@ -199,14 +217,14 @@ if [ "$generate_atmsrf" == true ]; then
   mkdir -p "$ATMSRFOUTLOC"
   set +e
   date
-  ncl gen_se_mkatmsrf_from_se.ncl \
-    'dstName="'${atmName}'"' \
-    'dstGridDir="'${atmGridName%/*}/'"' \
-    'dstGridFile="'${atmGridName##*/}'"' \
-    'atmsrfDir="'${ATMSRFOUTLOC}'"' \
-    'wgtFileDir="'${SCRATCHDIR}'"' \
-    'MACHINE="'${MACHINE}'"'
-  date
+  python gen_se_mkatmsrf_from_se.py \
+    --dstName "${atmName}" \
+    --dstGridDir "${atmGridName%/*}/" \
+    --dstGridFile "${atmGridName##*/}" \
+    --atmsrfDir "${ATMSRFOUTLOC}" \
+    --wgtFileDir "${SCRATCHDIR}" \
+    --MACHINE "${MACHINE}"
+  echo $? ; date
   set -e
 
   cd ..

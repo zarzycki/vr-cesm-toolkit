@@ -175,14 +175,14 @@ rm -v $WGTFILE
   mkdir -p "$ATMSRFOUTLOC"
   set +e
   date
-  ncl gen_se_mkatmsrf_from_se.ncl \
-    'dstName="'${atmName}'"' \
-    'dstGridDir="'${atmGridName%/*}/'"' \
-    'dstGridFile="'${atmGridName##*/}'"' \
-    'atmsrfDir="'${ATMSRFOUTLOC}'"' \
-    'wgtFileDir="'${SCRATCHDIR}'"' \
-    'MACHINE="'${MACHINE}'"'
-  date
+  python gen_se_mkatmsrf_from_se.py \
+    --dstName "${atmName}" \
+    --dstGridDir "${atmGridName%/*}/" \
+    --dstGridFile "${atmGridName##*/}" \
+    --atmsrfDir "${ATMSRFOUTLOC}" \
+    --wgtFileDir "${SCRATCHDIR}" \
+    --MACHINE "${MACHINE}"
+  echo $? ; date
   set -e
 
   cd ..
