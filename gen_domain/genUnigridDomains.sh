@@ -70,6 +70,7 @@ fi
 if [ "$MACHINE" == "NCAR" ]; then
   module load esmf
 fi
+which ncremap
 which ESMF_RegridWeightGen
 
 wgtFileDir="."
@@ -93,9 +94,30 @@ cd $SCRATCH/gen_domain_files/
 echo "Done!"
 
 # do ATM2OCN_FMAPNAME (aave)
-interp_method="conserve"   # bilinear, patch, conserve
+# generate_domain_files_E3SM.py recommends a conservative, monotone (traave)
+# map, so build it with ncremap. Set map_alg to esmfaave to get ESMF's
+# conservative remap (what the legacy gen_domain workflow used) via ncremap.
+map_alg="traave"           # traave, esmfaave, tempest
+interp_method="conserve"   # bilinear, patch, conserve (ESMF fallback only)
 # needs to be gx1v7 or tx01 instead of ocnGridName??
-ESMF_RegridWeightGen --ignore_unmapped -m ${interp_method} -w ${aaveMap} -s ${ocnGridName} -d ${atmGridName}
+
+if command -v ncremap > /dev/null 2>&1 ; then
+  ncremap --no_stdin -5 -a ${map_alg} --grd_src=${ocnGridName} --grd_dst=${atmGridName} --map_fl=${aaveMap}
+else
+  echo "GEN_DOMAIN: ncremap not found in PATH"
+fi
+
+# Fall back to ESMF_RegridWeightGen if ncremap is missing or did not make a map
+if [ ! -f "${aaveMap}" ]; then
+  echo "GEN_DOMAIN: falling back to ESMF_RegridWeightGen for ${aaveMap}"
+  ESMF_RegridWeightGen --ignore_unmapped -m ${interp_method} -w ${aaveMap} -s ${ocnGridName} -d ${atmGridName}
+fi
+
+if [ ! -f "${aaveMap}" ]; then
+  echo "GEN_DOMAIN: could not create ${aaveMap}"
+  echo "GEN_DOMAIN: Exiting."
+  exit 1
+fi
 
 #----------------------------------------------------------------------
 # CREATE DOMAIN FILES
