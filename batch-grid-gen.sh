@@ -81,6 +81,7 @@ echo "River Name: ${rofName}"
 echo "River Grid Name: ${rofGridName}"
 echo "Mask Name: ${maskName}"
 echo "Mask Grid Name: ${maskGridName}"
+echo "Generate np/pg SCRIP: ${generate_np_pg_scrip}"
 echo "Do E3SM Topo: ${do_e3sm_topo}"
 echo "Do CESM Topo: ${do_cesm_topo}"
 echo "Generate Maps: ${generate_maps}"
@@ -108,14 +109,54 @@ if [ "$generate_atmsrf" == true ]; then
     echo "python is not in the PATH (needed by gen_atmsrf). Please install/activate it." ; exit 1
   fi
 fi
-# File checks
-if [ ! -f "$atmGridName" ]; then
-  echo "Error: File does not exist: $atmGridName" ; exit 1
+if [ "$generate_np_pg_scrip" == true ]; then
+  for binary in GenerateVolumetricMesh ConvertMeshToSCRIP; do
+    if ! command -v $binary >/dev/null 2>&1; then
+      echo "$binary is not in the PATH (needed by generate_np_pg_scrip). Please install/activate TempestRemap." ; exit 1
+    fi
+  done
 fi
-
 set -e
 
 mkdir -p $OUTBASE
+
+# Spectral element / physics grid resolution. Set here and passed down to e3sm-topo.sh so
+# the SCRIP file names generated below and the ones the topo script looks for agree.
+SET_NP=4
+SET_PG=2
+
+#---------------------------------------------------------------------------------------------
+
+# Only the pg SCRIP grid is built here. The matching np SCRIP still comes out of
+# homme_tool inside e3sm/e3sm-topo.sh, since it needs the HOMME build and srun.
+if [ "$generate_np_pg_scrip" == true ]; then
+  EXODUS_NO_EXT="${EXODUSFILE%.*}"
+  EXODUSFILE_PG="$EXODUS_NO_EXT"_pg"$SET_PG".g
+  SCRIPFILE_PG="$EXODUS_NO_EXT"_pg"$SET_PG"_scrip.nc
+  EXODUSDIR=$OUTBASE/grids/exodus
+  SCRIPDIR=$OUTBASE/grids/scrip
+  mkdir -p $EXODUSDIR
+  mkdir -p $SCRIPDIR
+  if [[ ! -f "$SCRIPDIR/$SCRIPFILE_PG" ]]; then
+    if [ ! -f "$EXODUSDIR/$EXODUSFILE" ]; then
+      echo "Error: exodus file does not exist: $EXODUSDIR/$EXODUSFILE" ; exit 1
+    fi
+    GenerateVolumetricMesh --in $EXODUSDIR/$EXODUSFILE --out $EXODUSDIR/$EXODUSFILE_PG --np $SET_PG --uniform
+    ConvertMeshToSCRIP --in $EXODUSDIR/$EXODUSFILE_PG --out $SCRIPDIR/$SCRIPFILE_PG
+  else
+    echo "$SCRIPDIR/$SCRIPFILE_PG already exists, skipping SCRIP generation"
+  fi
+fi
+
+#---------------------------------------------------------------------------------------------
+
+# The atm SCRIP grid is consumed by the mapping, domain, and atmsrf stages, so it has to
+# exist by this point (it may have just been created by the block above).
+if [ "$generate_maps" == true ] || [ "$generate_domain" == true ] || [ "$generate_atmsrf" == true ]; then
+  if [ ! -f "$atmGridName" ]; then
+    echo "Error: File does not exist: $atmGridName" ; exit 1
+  fi
+fi
 
 #---------------------------------------------------------------------------------------------
 
@@ -125,7 +166,9 @@ if [ "$do_e3sm_topo" == true ]; then
   sbatch --wait e3sm-topo.sh \
    $EXODUSFILE \
    $OUTBASE/grids/ \
-   $OUTBASE/topo/
+   $OUTBASE/topo/ \
+   $SET_NP \
+   $SET_PG
   echo $? ; date
   cd ..
 elif [ "$do_cesm_topo" == true ]; then
@@ -171,8 +214,21 @@ if [ "$generate_domain" == true ]; then
 
   cd gen_domain/
 
+  # On NERSC the domain script needs a real allocation, since its weight
+  # generation dispatches mbtempest through srun, so submit it with
+  # sbatch --wait (same pattern as e3sm-topo.sh above) rather than running it
+  # inline on whatever node we happen to be on. Elsewhere (derecho) run it
+  # directly, as before.
+  run_gen_domain () {
+    if [ "$MACHINE" == "NERSC" ]; then
+      sbatch --wait genUnigridDomains.sh "$@"
+    else
+      ./genUnigridDomains.sh "$@"
+    fi
+  }
+
   date
-  (./genUnigridDomains.sh \
+  (run_gen_domain \
     $atmName \
     $atmGridName \
     $maskName \
@@ -186,7 +242,7 @@ if [ "$generate_domain" == true ]; then
   # If the land and atm are different grids, and lndGridName exists do this again
   if [ "$atmGridName" != "$lndGridName" ] && [ -n "$lndGridName" ]; then
     (date
-    ./genUnigridDomains.sh \
+    run_gen_domain \
       $lndName \
       $lndGridName \
       $maskName \

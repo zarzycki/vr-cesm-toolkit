@@ -27,7 +27,7 @@ set -e
 set -o errtrace
 trap 'echo "ERROR: Command \"${BASH_COMMAND}\" failed at line $LINENO"; exit 1' ERR
 
-if [ "$#" -eq 3 ]; then
+if [ "$#" -ge 3 ]; then
   EXODUSFILE=$1
   GRIDSDIR=$2
   TOPODIR=$3
@@ -37,8 +37,9 @@ else
   TOPODIR=/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/topo/
 fi
 
-SET_NP=4
-SET_PG=2
+# Optional 4th/5th args, defaulted so 3-arg callers keep the old behavior
+SET_NP=${4:-4}
+SET_PG=${5:-2}
 
 INPUTTOPO=/global/cfs/cdirs/e3sm/inputdata/atm/cam/hrtopo/USGS-topo-cube3000.nc
 nsmooth=6
@@ -96,10 +97,10 @@ cd ${homme_tool_root}
 ## Get SCRIP grid for PG
 #########################################################################################
 
-#conda activate betacast
-GenerateVolumetricMesh --in $EXODUSDIR/$EXODUSFILE --out $EXODUSDIR/$EXODUSFILE_PG --np $SET_PG --uniform
-ConvertMeshToSCRIP --in $EXODUSDIR/$EXODUSFILE_PG --out $SCRIPDIR/$SCRIPFILE_PG
-#conda deactivate
+if [[ ! -f "$SCRIPDIR/$SCRIPFILE_PG" ]]; then
+  GenerateVolumetricMesh --in $EXODUSDIR/$EXODUSFILE --out $EXODUSDIR/$EXODUSFILE_PG --np $SET_PG --uniform
+  ConvertMeshToSCRIP --in $EXODUSDIR/$EXODUSFILE_PG --out $SCRIPDIR/$SCRIPFILE_PG
+fi
 
 #########################################################################################
 ## Set env, navigate to env, build if needed
