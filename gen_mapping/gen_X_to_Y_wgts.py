@@ -42,17 +42,10 @@ print("-----")
 print("InterpMethod: "+InterpMethod)
 print("wgtFileDir: "+wgtFileDir)
 
-# interpString is the shorthand used in the map file name, algString is what
-# ncremap calls the same ESMF algorithm
-if InterpMethod == "patch":
-  interpString = "patc"
-  algString = "patch"
-if InterpMethod == "bilinear":
-  interpString = "blin"
-  algString = "esmfbilin"
-if InterpMethod == "conserve":
-  interpString = "aave"
-  algString = "esmfaave"
+# interpString is the shorthand used in the map file name, algString is the
+# matching ncremap --alg_typ
+algString = InterpMethod
+interpString = InterpMethod
 
 cdate = datetime.now().strftime("%y%m%d")
 wgtFileName = "map_"+srcName+"_TO_"+dstName+"_"+interpString+"."+cdate+".nc"
@@ -60,11 +53,27 @@ wgtFileName = "map_"+srcName+"_TO_"+dstName+"_"+interpString+"."+cdate+".nc"
 OUTNAME_ALL = sorted(glob.glob(wgtFileDir+"/"+"map_"+srcName+"_TO_"+dstName+"_"+interpString+"*.nc"))
 print("OUTNAME_ALL: "+str(OUTNAME_ALL))
 
+# ncremap picks the weight generator from alg_typ. Only ESMF_RegridWeightGen
+# understands the option string below; for TempestRemap and the NCO algorithms
+# ncremap builds its own, algorithm-specific option string, and --wgt_opt
+# *replaces* it wholesale rather than adding to it, so passing these flags with
+# a Tempest alg_typ both feeds GenerateOfflineMap flags it rejects (--no_log)
+# and throws away the --in_type/--out_type/--method flags that define the map.
+ESMF_CONSERVE = {"conserve", "esmfaave", "conservative", "cns", "c1", "aave"}
+ESMF_ALGS = ESMF_CONSERVE | {"bilinear", "esmfbilin", "bilin", "blin", "bln",
+                             "conserve2nd", "conservative2nd", "c2", "c2nd",
+                             "nearestdtos", "esmfndtos", "ndtos", "dtos", "nds",
+                             "neareststod", "esmfnstod", "nstod", "stod", "nsd",
+                             "patch", "patc", "pch"}
+useESMF = InterpMethod in ESMF_ALGS
+
 # ncremap defaults, minus the PET log file, plus the degenerate-cell and
 # normalization handling that NCL's ESMF_regrid_gen_weights turns on
-wgtOpt = "--no_log --ignore_unmapped --ignore_degenerate --check"
-if InterpMethod == "conserve":
-  wgtOpt = wgtOpt+" --norm_type fracarea"
+wgtOpt = ""
+if useESMF:
+  wgtOpt = "--no_log --ignore_unmapped --ignore_degenerate --check"
+  if InterpMethod in ESMF_CONSERVE:
+    wgtOpt = wgtOpt+" --norm_type fracarea"
 
 rgnOpt = []
 
@@ -81,15 +90,16 @@ def is_ESMF(gridName):
   header = subprocess.run(["ncdump", "-h", gridName], capture_output=True, text=True).stdout
   return "centerCoords" in header
 
-if is_ESMF(srcGridName):
-  print(srcGridName+" source is an ESMF file")
-  if InterpMethod != "conserve":
-    wgtOpt = wgtOpt+" --src_loc corner"
-
-if is_ESMF(dstGridName):
-  print(dstGridName+" dest is an ESMF file")
-  if InterpMethod != "conserve":
-    wgtOpt = wgtOpt+" --dst_loc corner"
+for which, gridName in (("source", srcGridName), ("dest", dstGridName)):
+  if not is_ESMF(gridName):
+    continue
+  print(gridName+" "+which+" is an ESMF file")
+  if not useESMF:
+    # TempestRemap's mesh readers only handle SCRIP and Exodus
+    print("WARNING: "+InterpMethod+" does not use ESMF_RegridWeightGen, so the "
+          +which+" grid must be SCRIP or Exodus, not ESMF unstructured")
+  elif InterpMethod not in ESMF_CONSERVE:
+    wgtOpt = wgtOpt+(" --src_loc corner" if which == "source" else " --dst_loc corner")
 
 if not OUTNAME_ALL:
   print("Generating "+wgtFileName)
@@ -97,8 +107,9 @@ if not OUTNAME_ALL:
          "--alg_typ="+algString,
          "--grd_src="+srcGridName,
          "--grd_dst="+dstGridName,
-         "--map_fl="+os.path.join(wgtFileDir, wgtFileName),
-         "--wgt_opt="+wgtOpt] + rgnOpt
+         "--map_fl="+os.path.join(wgtFileDir, wgtFileName)] + rgnOpt
+  if wgtOpt:
+    cmd.append("--wgt_opt="+wgtOpt)
   print(" ".join(cmd))
   rc = subprocess.run(cmd).returncode
   if rc != 0:
