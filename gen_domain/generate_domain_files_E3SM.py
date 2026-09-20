@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 #---------------------------------------------------------------------------------------------------
 '''
-This is a replacement for the legacy gen_domain tool created for CESM. 
-Most legacy functionality is reproduced, with the notable exception of 
+This is a replacement for the legacy gen_domain tool created for CESM.
+Most legacy functionality is reproduced, with the notable exception of
 the pole point latitude adjustment needed for the CESM FV grid.
 
-Created April, 2024 by Walter Hannah (LLNL) 
+Created April, 2024 by Walter Hannah (LLNL)
 '''
 #---------------------------------------------------------------------------------------------------
 '''
@@ -25,8 +25,8 @@ output_netcdf_type = 'NETCDF3_64BIT_DATA'
 class clr:END,RED,GREEN,MAGENTA,CYAN = '\033[0m','\033[31m','\033[32m','\033[35m','\033[36m'
 #---------------------------------------------------------------------------------------------------
 usage = '''
-python generate_domain_files_E3SM.py  -m <map_file> 
-                                      -o <ocn_grid_name> 
+python generate_domain_files_E3SM.py  -m <map_file>
+                                      -o <ocn_grid_name>
                                       -l <lnd_grid_name>
                                       [--output-root <path>]
                                       [--date-stamp <date string>]
@@ -36,8 +36,8 @@ python generate_domain_files_E3SM.py  -m <map_file>
 
 Purpose:
   For "bi-grid" configurations of E3SM (land grid is same as atmos):
-  Given a mapping file from the ocean grid (where the mask is defined) 
-  to the atmosphere grid, this tool creates land and ocean domain files 
+  Given a mapping file from the ocean grid (where the mask is defined)
+  to the atmosphere grid, this tool creates land and ocean domain files
   needed by data model components (ex. datm, dlnd, docn)
 
   For "tri-grid" configurations of E3SM (land grid is different from atmos/ocn):
@@ -45,7 +45,7 @@ Purpose:
   a second iteration is needed with a similar ocn->lnd map.
 
 Environment
-  
+
   This tool requires a few special packages, such as xarray, numba, and itertools.
   These are all included in the E3SM unified environment:
   https://e3sm.org/resources/tools/other-tools/e3sm-unified-environment/
@@ -56,17 +56,17 @@ Environment
 The following output domain files are created:
 
   domain.lnd.<gridlnd>_<gridocn>.<date_stamp>.nc
-    land domain file on the land/atmos grid with a land fraction 
+    land domain file on the land/atmos grid with a land fraction
     corresponding to (1-ocnfrac) mask mapped to the land grid
 
   domain.ocn.<gridlnd>_<gridocn>.<date_stamp>.nc
-    ocean domain on the land/atmos grid with an ocean fraction based 
-    on the ocean grid mask mapped to the land/atmos grid for when 
-    atm,lnd,ice,ocn are all on the same grid 
+    ocean domain on the land/atmos grid with an ocean fraction based
+    on the ocean grid mask mapped to the land/atmos grid for when
+    atm,lnd,ice,ocn are all on the same grid
     (not compatible with MPAS sea-ice)
 
   domain.ocn.<gridocn>.<date_stamp>.nc
-    ocean domain on the ocean grid 
+    ocean domain on the ocean grid
 '''
 from optparse import OptionParser
 parser = OptionParser(usage=usage)
@@ -123,11 +123,11 @@ def main():
   #-------------------------------------------------------------------------------
   # check for valid input arguments
 
-  if opts.map_file is None: 
+  if opts.map_file is None:
     raise ValueError(f'{clr.RED}input map file was not specified{clr.END}')
-  if opts.lnd_grid is None: 
+  if opts.lnd_grid is None:
     raise ValueError(f'{clr.RED}land grid name was not specified{clr.END}')
-  if opts.ocn_grid is None: 
+  if opts.ocn_grid is None:
     raise ValueError(f'{clr.RED}ocean grid name was not specified{clr.END}')
   if not os.path.exists(opts.output_root) :
     raise ValueError(f'{clr.RED}Output root path does not exist{clr.END}')
@@ -168,7 +168,7 @@ def main():
 
   #-----------------------------------------------------------------------------
   # open map file as dataset
-  
+
   ds = xr.open_dataset(opts.map_file)
 
   #-----------------------------------------------------------------------------
@@ -179,13 +179,17 @@ def main():
 
   if 'grid_file_ocn' in ds.attrs.keys():
     ocn_grid_file = ds.attrs['grid_file_ocn']
-  else:
+  elif 'grid_file_src' in ds.attrs.keys():
     ocn_grid_file = ds.attrs['grid_file_src']
+  else:
+    ocn_grid_file = 'NULL'
 
   if 'grid_file_ocn' in ds.attrs.keys():
     atm_grid_file = ds.attrs['grid_file_atm']
-  else:
+  elif 'grid_file_dst' in ds.attrs.keys():
     atm_grid_file = ds.attrs['grid_file_dst']
+  else:
+    atm_grid_file = 'NULL'
 
   src_grid_rank = len(ds.src_grid_rank.values)
   dst_grid_rank = len(ds.dst_grid_rank.values)
@@ -278,8 +282,8 @@ def main():
   frac_a = xr.where( mask_a!=0, xr.ones_like(ds['area_a']), xr.zeros_like(ds['area_a']) )
 
   # compute ocn fraction on atm grid
-  ofrac = compute_ofrac_on_atm( len(ds['n_s']), np.zeros(ds['area_b'].shape), 
-                                frac_a.values, ds['S'].values, 
+  ofrac = compute_ofrac_on_atm( len(ds['n_s']), np.zeros(ds['area_b'].shape),
+                                frac_a.values, ds['S'].values,
                                 ds['row'].values-1, ds['col'].values-1 )
   ofrac = xr.DataArray(ofrac,dims=['n_b'])
 
@@ -379,7 +383,7 @@ def add_metadata(ds):
   ds['xc'] = ds['xc'].assign_attrs({'long_name':'longitude of grid cell center'})
   ds['xc'] = ds['xc'].assign_attrs({'units':'degrees_east'})
   ds['xc'] = ds['xc'].assign_attrs({'bounds':'xv'})
-  
+
   ds['yc'] = ds['yc'].assign_attrs({'long_name':'latitude of grid cell center'})
   ds['yc'] = ds['yc'].assign_attrs({'units':'degrees_north'})
   ds['yc'] = ds['yc'].assign_attrs({'bounds':'yv'})
