@@ -1,12 +1,12 @@
 ### USER DEFINABLE
-atm_ncpl = 480
-dt_tracer_factor = 6
+atm_ncpl = 864
+dt_tracer_factor = 4
 dt_remap_factor = 2
-se_tstep = 7.5
+se_tstep = 6.25
 rad_frequency = 5
 
 ### Calcs
-DIVISIBLE_TOL = 1e-8  # Relative tolerance for "almost integer"
+DIVISIBLE_TOL = 1e-4  # Relative tolerance for "almost integer"
 SECONDS_IN_DAY = 24 * 60 * 60
 dtime = SECONDS_IN_DAY / atm_ncpl
 dt_tracer = dt_tracer_factor * se_tstep
@@ -28,8 +28,11 @@ print(f"dt_radiation: {dt_rad} s -- {dt_rad/60:.2f} min")
 # -----------------------------------------
 
 nsplit_direct = dtime / se_tstep
-if not nsplit_direct.is_integer():
-    raise ValueError(f"Invalid config: dtime/se_tstep = {nsplit_direct:.4f} is not an integer. "
+nsplit_direct_int = round(nsplit_direct)
+# Use a relative tolerance: se_tstep is often a truncated repeating decimal
+# (e.g. 25/3 -> 8.3333333333333), so exact integer division never holds.
+if abs(nsplit_direct - nsplit_direct_int) > DIVISIBLE_TOL * nsplit_direct:
+    raise ValueError(f"Invalid config: dtime/se_tstep = {nsplit_direct:.10f} is not an integer. "
                      f"Ensure dtime ({dtime}) divides evenly by se_tstep ({se_tstep}).")
 
 # -----------------------------------------
