@@ -1,19 +1,19 @@
 MACHINE="NERSC" # NERSC or NCAR <-- allows for machine-specific settings
 
 ## Special logic for E3SM
-INDEX="001"   # $1
+INDEX="002"   # $1
 RESLEVEL="192x8"   # $2
 EXODUSFILE="TClandfall-${INDEX}_ne${RESLEVEL}.g"
 atmName="TClandfall-${INDEX}_ne${RESLEVEL}_pg2"
 atmGridName="/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/grids/scrip/TClandfall-${INDEX}_ne${RESLEVEL}_pg2_scrip.nc"
 
 ###### GRIDS
-lndName="conus-tight_256x8_pg2"
-lndGridName="/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/grids/scrip/conus-tight_256x8_pg2_scrip.nc"
-#lndName="ne128pg2"
-#lndGridName="/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/grids/scrip/ne128pg2_scrip.nc"
+#lndName="conus-tight_256x8_pg2"
+#lndGridName="/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/grids/scrip/conus-tight_256x8_pg2_scrip.nc"
+lndName="ne128pg2"
+lndGridName="/global/homes/c/czarzyck/m2637/E3SM_SCREAM_files/grids/scrip/ne128pg2_scrip.nc"
 rofName="r0125"
-rofGridName="/global/cfs/cdirs/e3sm/inputdata/lnd/clm2/mappingdata/grids/SCRIPgrid_0.125x0.125_nomask_c170126.nc"
+rofGridName="/global/cfs/cdirs/e3sm/inputdata/lnd/clm2/mappingdata/grids/MOSART_global_8th.scrip.20180211c.nc"
 
 ##### MASKS
 maskName="oRRS15to5"
@@ -21,8 +21,9 @@ maskGridName="/global/cfs/cdirs/e3sm/inputdata/ocn/mpas-o/oRRS15to5/ocean.RRS.15
 #maskName="ICOS10"
 #maskGridName="/global/cfs/cdirs/e3sm/inputdata/ocn/mpas-o/ICOS10/ocean.ICOS10.scrip.211015.nc"
 
+generate_np_pg_scrip=false
 do_e3sm_topo=false
 do_cesm_topo=false
 generate_maps=true
 generate_domain=true
-generate_atmsrf=false
+generate_atmsrf=true

@@ -12,6 +12,7 @@ rofGridName="/glade/campaign/cesm/cesmdata/inputdata/lnd/clm2/mappingdata/grids/
 maskName="tx0.1v2"
 maskGridName="/glade/p/cesmdata/cseg/inputdata/share/scripgrids/tx0.1v2_090127.nc"
 
+generate_np_pg_scrip=false
 do_e3sm_topo=false
 do_cesm_topo=true
 generate_maps=false
