@@ -126,7 +126,7 @@ echo "Done!"
 # generate_domain_files_E3SM.py recommends a conservative, monotone (traave)
 # map, so build it with ncremap. Set map_alg to esmfaave to get ESMF's
 # conservative remap (what the legacy gen_domain workflow used) via ncremap.
-map_alg="traave"           # traave, esmfaave, tempest
+map_alg="esmfaave"         # traave, esmfaave, tempest
 interp_method="conserve"   # bilinear, patch, conserve (ESMF fallback only)
 # needs to be gx1v7 or tx01 instead of ocnGridName??
 
@@ -171,9 +171,18 @@ if [ "${MPI_NBR}" -gt 1 ] && [[ "${map_alg}" != esmf* ]] && command -v mbtempest
     fi
   done
   echo "GEN_DOMAIN: using MOAB/mbtempest with ${MPI_NBR} MPI tasks"
+elif [ "${MPI_NBR}" -gt 1 ] && [[ "${map_alg}" == esmf* ]]; then
+  # Run ESMF_RegridWeightGen under srun/mpirun so no single rank has to hold
+  # the full high-res ocean grid (serial ERWG segfaulted on oRRS15to5 on pm-cpu)
+  ncremap_opts+=(--mpi_nbr=${MPI_NBR})
+  echo "GEN_DOMAIN: using ESMF_RegridWeightGen with ${MPI_NBR} MPI tasks"
 else
   echo "GEN_DOMAIN: using serial TempestRemap (MPI_NBR=${MPI_NBR})"
 fi
+
+# Perlmutter's 8 MB default stack (propagated from the login shell into the
+# job) is the suspected cause of ESMF_RegridWeightGen segfaults on large grids
+ulimit -s unlimited
 
 map_t0=${SECONDS}
 map_gen="none"
